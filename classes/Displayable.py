@@ -1,5 +1,6 @@
 import pygame
 import random
+import os
 from classes.BaseClass import BaseClass
 
 
@@ -39,3 +40,22 @@ class Position(BaseClass):
 	def get_rect(self):
 		return ((self.x - (self.length / 2)), (self.y - (self.height / 2)), (self.x + (self.length / 2)),
 				(self.y + (self.height / 2)))
+
+
+class Animated(Displayable):
+	assets = []
+
+	def __init__(self, scene):
+		super().__init__(scene)
+		self.pos = Position(scene, length=20, height=20)
+
+	def load_asset(self, asset_dir_path):
+		for asset in os.listdir(asset_dir_path):
+			self.assets.append(pygame.image.load(asset_dir_path + '.' + asset))
+
+	def draw(self, asset_number):
+		if self.assets is None:
+			pygame.draw.rect(self.scene, self.pos.color, self.pos.get_rect())
+		else:
+			self.scene.blit(self.assets[asset_number], (self.pos.x, self.pos.y))
+
