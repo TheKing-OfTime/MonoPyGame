@@ -1,6 +1,7 @@
 import pygame
 import random
 import os
+import sys
 from classes.BaseClass import BaseClass
 
 
@@ -15,7 +16,7 @@ class Displayable(BaseClass):
 		self._show = show
 
 	def load_asset(self, asset_path):
-		self.asset = pygame.image.load(asset_path)
+		self.asset = pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_path)
 
 	# noinspection PyTypeChecker
 	def draw(self):
@@ -62,6 +63,7 @@ class Position(BaseClass):
 
 class Animated(Displayable):
 	assets = []
+	frame = 0
 
 	def __init__(self, scene):
 		super().__init__(scene)
@@ -69,10 +71,22 @@ class Animated(Displayable):
 
 	def load_asset(self, asset_dir_path):
 		for asset in os.listdir(asset_dir_path):
-			self.assets.append(pygame.image.load(asset_dir_path + '.' + asset))
+			self.assets.append(
+				pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_dir_path + '/' + asset)
+			)
 
-	def draw(self, asset_number):
+	def draw(self, asset_number=None):
+		if asset_number is not None:
+			self.frame = asset_number
 		if self.assets is None:
 			pygame.draw.rect(self.scene, self.pos.color, self.pos.get_rect())
 		else:
-			self.scene.blit(self.assets[asset_number], (self.pos.x, self.pos.y))
+			self.scene.blit(self.assets[self.frame], (self.pos.x, self.pos.y))
+
+	def draw_next(self):
+		if self.frame < len(self.assets) - 1:
+			self.frame += 1
+		else:
+			self.frame = 0
+		print(self.frame)
+		self.draw()
