@@ -1,25 +1,36 @@
 import pygame
 import random
+import os
 from classes.BaseClass import BaseClass
 
 
 class Displayable(BaseClass):
 	asset = None
 	pos = None
+	_show: bool = False
 
-	def __init__(self, scene):
+	def __init__(self, scene, show=False):
 		super().__init__(scene)
-		self.pos = Position(scene, length=10, height=10)
+		self.pos = Position(scene, length=100, height=100)
+		self._show = show
 
 	def load_asset(self, asset_path):
 		self.asset = pygame.image.load(asset_path)
 
 	# noinspection PyTypeChecker
 	def draw(self):
+		if not self._show:
+			return
 		if self.asset is None:
 			pygame.draw.rect(self.scene, self.pos.color, self.pos.get_rect())
 		else:
 			self.scene.blit(self.asset, (self.pos.x, self.pos.y))
+
+	def show(self):
+		self._show = True
+
+	def hide(self):
+		self._show = False
 
 
 class Position(BaseClass):
@@ -28,7 +39,7 @@ class Position(BaseClass):
 	length = 0
 	height = 0
 
-	def __init__(self, scene, x=100, y=100, length=1, height=1):
+	def __init__(self, scene, x=100, y=100, length=10, height=10):
 		super().__init__(scene)
 		self.x = x
 		self.y = y
@@ -37,5 +48,31 @@ class Position(BaseClass):
 		self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
 	def get_rect(self):
-		return ((self.x - (self.length / 2)), (self.y - (self.height / 2)), (self.x + (self.length / 2)),
-				(self.y + (self.height / 2)))
+		print(self.x, self.y, self.length, self.height)
+		return self.x, self.y, self.length, self.height
+
+	def move(self, x, y):
+		self.x += x
+		self.y += y
+
+	def move_to(self, x, y):
+		self.x = x
+		self.y = y
+
+
+class Animated(Displayable):
+	assets = []
+
+	def __init__(self, scene):
+		super().__init__(scene)
+		self.pos = Position(scene, length=20, height=20)
+
+	def load_asset(self, asset_dir_path):
+		for asset in os.listdir(asset_dir_path):
+			self.assets.append(pygame.image.load(asset_dir_path + '.' + asset))
+
+	def draw(self, asset_number):
+		if self.assets is None:
+			pygame.draw.rect(self.scene, self.pos.color, self.pos.get_rect())
+		else:
+			self.scene.blit(self.assets[asset_number], (self.pos.x, self.pos.y))
