@@ -88,5 +88,4 @@ class Animated(Displayable):
 			self.frame += 1
 		else:
 			self.frame = 0
-		print(self.frame)
 		self.draw()
