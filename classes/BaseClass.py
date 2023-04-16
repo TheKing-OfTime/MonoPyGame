@@ -1,6 +1,7 @@
 class BaseClass:
     _id = ''
     scene = None
+    path_to_main = ''
 
     def __init__(self, scene):
         self.scene = scene
