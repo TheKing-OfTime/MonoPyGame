@@ -9,7 +9,7 @@ class GameBackground(Displayable):
 
 	def __init__(self, scene):
 		super().__init__(scene)
-		self.load_asset('assets/tiles/Board.png')
+		self.load_asset('assets/Board/monopolyFirst.jpg')
 		self.show()
 		self.asset = pygame.transform.scale(self.asset, (self.width, self.height))
 		self.pos.x = (self.scene.get_width()/2) - (self.width/2)
