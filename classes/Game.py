@@ -1,5 +1,5 @@
 import pygame
-import json
+import json, random
 import time
 from classes.BaseClass import BaseClass
 from classes.Displayable import Displayable, Animated
@@ -34,10 +34,11 @@ class Game(BaseClass):
                 if event.type == pygame.QUIT:
                     self.done = True
             self.bg.draw()
-            self.cards[0].draw_next()
-            self.cards[0].pos.move_to(100, 100)
-            if not self.cards[0]._show:
-                self.cards[0].show()
+            for card in self.cards:
+                card.draw_next()
+                card.pos.move_to(random.randint(100, 300), random.randint(100, 300))
+                if not card._show:
+                    card.show()
             pygame.display.flip()
             pygame.time.wait(10)
             self.scene.fill(color=[0, 0, 0])
