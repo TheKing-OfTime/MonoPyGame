@@ -1,3 +1,5 @@
+import pygame
+
 from classes.Displayable import Animated
 
 
@@ -19,6 +21,8 @@ class Card(Animated):
         self.house_price = street_data["house_price"]
         self.hostel_price = street_data["hostel_price"]
         self.load_asset(street_data["assets_path"])
+        self.rescale_assets(200, 300)
+        self.pos.move_to_random()
 
     def deposit(self):
         self.deposited = not self.deposited

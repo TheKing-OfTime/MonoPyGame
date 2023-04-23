@@ -35,8 +35,7 @@ class Game(BaseClass):
                     self.done = True
             self.bg.draw()
             for card in self.cards:
-                card.draw_next()
-                card.pos.move_to(random.randint(100, 300), random.randint(100, 300))
+                card.draw(1)
                 if not card._show:
                     card.show()
             pygame.display.flip()
