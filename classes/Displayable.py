@@ -6,12 +6,12 @@ from classes.BaseClass import BaseClass
 
 
 class Displayable(BaseClass):
-	asset = None
-	pos = None
-	_show: bool = False
 
 	def __init__(self, scene, show=False):
 		super().__init__(scene)
+		self.asset = None
+		self.pos = None
+		self._show: bool = False
 		self.pos = Position(scene, length=100, height=100)
 		self._show = show
 
@@ -35,10 +35,6 @@ class Displayable(BaseClass):
 
 
 class Position(BaseClass):
-	x = 0
-	y = 0
-	length = 0
-	height = 0
 
 	def __init__(self, scene, x=100, y=100, length=10, height=10):
 		super().__init__(scene)
@@ -60,20 +56,30 @@ class Position(BaseClass):
 		self.x = x
 		self.y = y
 
+	def move_to_random(self):
+		self.x = random.randint(50, round(self.scene.get_width()/1.5))
+		self.y = random.randint(50, round(self.scene.get_height()/1.5))
 
 class Animated(Displayable):
-	assets = []
-	frame = 0
 
 	def __init__(self, scene):
 		super().__init__(scene)
 		self.pos = Position(scene, length=20, height=20)
+		self.assets = []
+		self.frame = 0
 
 	def load_asset(self, asset_dir_path):
 		for asset in os.listdir(asset_dir_path):
 			self.assets.append(
-				pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_dir_path + '/' + asset)
+				pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_dir_path + '\\' + asset)
 			)
+
+	def rescale_assets(self, width, height):
+		new_assets = []
+		for asset in self.assets:
+			new_assets.append(pygame.transform.scale(asset, (width, height)))
+		self.assets = new_assets
+		return self.assets
 
 	def draw(self, asset_number=None):
 		if asset_number is not None:

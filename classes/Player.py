@@ -1,10 +1,11 @@
-from classes.BaseClass import BaseClass
+from classes.Displayable import Displayable
 from classes.Dice import Dice
 
 
-class Player(BaseClass):
+class Player(Displayable):
     def __init__(self, scene, id):
         super().__init__(scene)
+        self.load_asset('assets\\pieces\\playable\\Car.png')
         self._id = id
         self.tile = 0
         self.money = 1500
