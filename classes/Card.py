@@ -26,3 +26,5 @@ class Card(Animated):
 
     def deposit(self):
         self.deposited = not self.deposited
+
+    #def flip

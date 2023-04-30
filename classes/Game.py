@@ -34,6 +34,22 @@ class Game(BaseClass):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.done = True
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_UP:
+                        self.players[0].pos.move(0, -1)
+                        print(self.players[0].pos.y)
+                    elif event.key == pygame.K_DOWN:
+                        self.players[0].pos.move(0, 1)
+                        print(self.players[0].pos.y)
+                    elif event.key == pygame.K_LEFT:
+                        self.players[0].pos.move(-1, 0)
+                        print(self.players[0].pos.x)
+                    elif event.key == pygame.K_RIGHT:
+                        self.players[0].pos.move(1, 0)
+                        print(self.players[0].pos.x)
+                    elif event.key == pygame.K_SPACE:
+                        self.players[0].move(1)
+
             self.bg.draw()
             for card in self.cards:
                 card.draw(1)
@@ -45,7 +61,7 @@ class Game(BaseClass):
                     player.show()
             pygame.display.flip()
             pygame.time.wait(10)
-            self.scene.fill(color=[0, 0, 0])
+            self.scene.fill(color=[50, 50, 50])
 
     def load_cards(self):
         with open('config.json', 'r') as rf:
