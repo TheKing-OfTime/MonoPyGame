@@ -36,7 +36,6 @@
         "name": "пр-д Дворцовый",
         "price": 600,
         "rent_price": 20,
-        "combo_rent_price": 40,
         "one_house_rent_price": 110,
         "two_house_rent_price": 320,
         "three_house_rent_price": 930,
@@ -51,7 +50,7 @@
       "id": 4,
       "type": "taxes",
       "data": {
-        "price": 666
+        "price": 2000
       }
     },
     {
@@ -69,7 +68,6 @@
         "name": "б-р Октябрьски",
         "price": 1000,
         "rent_price": 60,
-        "combo_rent_price": 120,
         "one_house_rent_price": 300,
         "two_house_rent_price": 900,
         "three_house_rent_price": 2700,
@@ -93,7 +91,6 @@
         "name": "ул. Сакко и Ванцетти",
         "price": 1200,
         "rent_price": 60,
-        "combo_rent_price": 120,
         "one_house_rent_price": 310,
         "two_house_rent_price": 920,
         "three_house_rent_price": 2730,
@@ -112,7 +109,6 @@
         "name": "ул. Суворова",
         "price": 1000,
         "rent_price": 60,
-        "combo_rent_price": 120,
         "one_house_rent_price": 300,
         "two_house_rent_price": 900,
         "three_house_rent_price": 2700,
@@ -136,7 +132,6 @@
         "name": "ул. Садовая",
         "price": 1400,
         "rent_price": 100,
-        "combo_rent_price": 200,
         "one_house_rent_price": 500,
         "two_house_rent_price": 1500,
         "three_house_rent_price": 4500,
@@ -162,7 +157,6 @@
         "name": "ул. Коминтерна",
         "price": 1400,
         "rent_price": 100,
-        "combo_rent_price": 200,
         "one_house_rent_price": 500,
         "two_house_rent_price": 1500,
         "three_house_rent_price": 4500,
@@ -181,7 +175,6 @@
         "name": "ул. Коммунальная",
         "price": 1600,
         "rent_price": 100,
-        "combo_rent_price": 200,
         "one_house_rent_price": 510,
         "two_house_rent_price": 1520,
         "three_house_rent_price": 2730,
@@ -207,7 +200,6 @@
         "name": "ул. Станционная",
         "price": 1800,
         "rent_price": 160,
-        "combo_rent_price": 320,
         "one_house_rent_price": 800,
         "two_house_rent_price": 2200,
         "three_house_rent_price": 6000,
@@ -231,7 +223,6 @@
         "name": "ул. Горького",
         "price": 1800,
         "rent_price": 160,
-        "combo_rent_price": 320,
         "one_house_rent_price": 800,
         "two_house_rent_price": 2200,
         "three_house_rent_price": 6000,
@@ -250,7 +241,6 @@
         "name": "ул. Дзержинского",
         "price": 2000,
         "rent_price": 160,
-        "combo_rent_price": 320,
         "one_house_rent_price": 810,
         "two_house_rent_price": 2220,
         "three_house_rent_price": 6030,
@@ -274,7 +264,6 @@
         "name": "ул. Ленина",
         "price": 2200,
         "rent_price": 180,
-        "combo_rent_price": 360,
         "one_house_rent_price": 900,
         "two_house_rent_price": 2500,
         "three_house_rent_price": 7000,
@@ -298,7 +287,6 @@
         "name": "ул. Терешковой",
         "price": 2200,
         "rent_price": 180,
-        "combo_rent_price": 360,
         "one_house_rent_price": 900,
         "two_house_rent_price": 2500,
         "three_house_rent_price": 7000,
@@ -317,7 +305,6 @@
         "name": "ул. Гагарина",
         "price": 2400,
         "rent_price": 180,
-        "combo_rent_price": 360,
         "one_house_rent_price": 910,
         "two_house_rent_price": 2520,
         "three_house_rent_price": 7030,
@@ -343,7 +330,6 @@
         "name": "ул. Исаева",
         "price": 2600,
         "rent_price": 240,
-        "combo_rent_price": 480,
         "one_house_rent_price": 1200,
         "two_house_rent_price": 3600,
         "three_house_rent_price": 8500,
@@ -369,7 +355,6 @@
         "name": "ул. Тихонравова",
         "price": 2600,
         "rent_price": 240,
-        "combo_rent_price": 480,
         "one_house_rent_price": 1200,
         "two_house_rent_price": 3600,
         "three_house_rent_price": 8500,
@@ -380,148 +365,142 @@
         "assets_path": "assets\\tiles\\yellow_2"
       }
     },
-  {
-    "id": 29,
-    "type": "street",
-    "data": {
-      "colour": "yellow",
-      "name": "ул. Калиниградская",
-      "price": 2800,
-      "rent_price": 240,
-      "combo_rent_price": 480,
-      "one_house_rent_price": 1210,
-      "two_house_rent_price": 3620,
-      "three_house_rent_price": 8530,
-      "four_house_rent_price": 10290,
-      "hostel_rent_price": 12050,
-      "house_price": 1500,
-      "hostel_price": 1500,
-      "assets_path": "assets\\tiles\\yellow_3"
+    {
+      "id": 29,
+      "type": "street",
+      "data": {
+        "colour": "yellow",
+        "name": "ул. Калиниградская",
+        "price": 2800,
+        "rent_price": 240,
+        "one_house_rent_price": 1210,
+        "two_house_rent_price": 3620,
+        "three_house_rent_price": 8530,
+        "four_house_rent_price": 10290,
+        "hostel_rent_price": 12050,
+        "house_price": 1500,
+        "hostel_price": 1500,
+        "assets_path": "assets\\tiles\\yellow_3"
+      }
+    },
+    {
+      "id": 30,
+      "type": "prison_portal",
+      "data": {}
+    },
+    {
+      "id": 31,
+      "type": "street",
+      "data": {
+        "colour": "green",
+        "name": "ул. Циолковского",
+        "price": 3000,
+        "rent_price": 260,
+        "one_house_rent_price": 1300,
+        "two_house_rent_price": 3900,
+        "three_house_rent_price": 9000,
+        "four_house_rent_price": 11000,
+        "hostel_rent_price": 12750,
+        "house_price": 2000,
+        "hostel_price": 2000,
+        "assets_path": "assets\\tiles\\green_1"
+      }
+    },
+    {
+      "id": 32,
+      "type": "chest",
+      "data": {}
+    },
+    {
+      "id": 33,
+      "type": "street",
+      "data": {
+        "colour": "green",
+        "name": "ш. Болшевское",
+        "price": 3000,
+        "rent_price": 260,
+        "one_house_rent_price": 1300,
+        "two_house_rent_price": 3900,
+        "three_house_rent_price": 9000,
+        "four_house_rent_price": 11000,
+        "hostel_rent_price": 12750,
+        "house_price": 2000,
+        "hostel_price": 2000,
+        "assets_path": "assets\\tiles\\green_2"
+      }
+    },
+    {
+      "id": 34,
+      "type": "street",
+      "data": {
+        "colour": "green",
+        "name": "ул. Пионерская",
+        "price": 3200,
+        "rent_price": 260,
+        "one_house_rent_price": 1310,
+        "two_house_rent_price": 3920,
+        "three_house_rent_price": 9030,
+        "four_house_rent_price": 11040,
+        "hostel_rent_price": 12790,
+        "house_price": 2000,
+        "hostel_price": 2000,
+        "assets_path": "assets\\tiles\\green_3"
+      }
+    },
+    {
+      "id": 35,
+      "type": "station",
+      "data": {
+        "name": "Фабрика 1 мая"
+      }
+    },
+    {
+      "id": 36,
+      "type": "chance",
+      "data": {}
+    },
+    {
+      "id": 37,
+      "type": "street",
+      "data": {
+        "colour": "blue",
+        "name": "пр-кт Королёва",
+        "price": 3500,
+        "rent_price": 500,
+        "one_house_rent_price": 2000,
+        "two_house_rent_price": 6000,
+        "three_house_rent_price": 14000,
+        "four_house_rent_price": 17000,
+        "hostel_rent_price": 20000,
+        "house_price": 2000,
+        "hostel_price": 2000,
+        "assets_path": "assets\\tiles\\blue_1"
+      }
+    },
+    {
+      "id": 38,
+      "type": "taxes",
+      "data": {
+        "price": "1000"
+      }
+    },
+    {
+      "id": 39,
+      "type": "street",
+      "data": {
+        "colour": "blue",
+        "name": "пр-кт Космонавтов",
+        "price": 4000,
+        "rent_price": 500,
+        "one_house_rent_price": 2010,
+        "two_house_rent_price": 6020,
+        "three_house_rent_price": 14030,
+        "four_house_rent_price": 17040,
+        "hostel_rent_price": 20090,
+        "house_price": 2000,
+        "hostel_price": 2000,
+        "assets_path": "assets\\tiles\\blue_2"
+      }
     }
-  },
-  {
-    "id": 30,
-    "type": "prison_portal",
-    "data": {}
-  },
-  {
-    "id": 31,
-    "type": "street",
-    "data": {
-      "colour": "green",
-      "name": "ул. Циолковского",
-      "price": 3000,
-      "rent_price": 260,
-      "combo_rent_price": 520,
-      "one_house_rent_price": 1300,
-      "two_house_rent_price": 3900,
-      "three_house_rent_price": 9000,
-      "four_house_rent_price": 11000,
-      "hostel_rent_price": 12750,
-      "house_price": 2000,
-      "hostel_price": 2000,
-      "assets_path": "assets\\tiles\\green_1"
-    }
-  },
-  {
-    "id": 32,
-    "type": "chest",
-    "data": {}
-  },
-  {
-    "id": 33,
-    "type": "street",
-    "data": {
-      "colour": "green",
-      "name": "ш. Болшевское",
-      "price": 3000,
-      "rent_price": 260,
-      "combo_rent_price": 520,
-      "one_house_rent_price": 1300,
-      "two_house_rent_price": 3900,
-      "three_house_rent_price": 9000,
-      "four_house_rent_price": 11000,
-      "hostel_rent_price": 12750,
-      "house_price": 2000,
-      "hostel_price": 2000,
-      "assets_path": "assets\\tiles\\green_2"
-    }
-  },
-  {
-    "id": 34,
-    "type": "street",
-    "data": {
-      "colour": "green",
-      "name": "ул. Пионерская",
-      "price": 3200,
-      "rent_price": 260,
-      "combo_rent_price": 520,
-      "one_house_rent_price": 1310,
-      "two_house_rent_price": 3920,
-      "three_house_rent_price": 9030,
-      "four_house_rent_price": 11040,
-      "hostel_rent_price": 12790,
-      "house_price": 2000,
-      "hostel_price": 2000,
-      "assets_path": "assets\\tiles\\green_3"
-    }
-  },
-  {
-    "id": 35,
-    "type": "station",
-    "data": {
-      "name": "Фабрика 1 мая"
-    }
-  },
-  {
-    "id": 36,
-    "type": "chance",
-    "data": {}
-  },
-  {
-    "id": 37,
-    "type": "street",
-    "data": {
-      "colour": "blue",
-      "name": "пр-кт Королёва",
-      "price": 3500,
-      "rent_price": 500,
-      "combo_rent_price": 1000,
-      "one_house_rent_price": 2000,
-      "two_house_rent_price": 6000,
-      "three_house_rent_price": 14000,
-      "four_house_rent_price": 17000,
-      "hostel_rent_price": 20000,
-      "house_price": 2000,
-      "hostel_price": 2000,
-      "assets_path": "assets\\tiles\\blue_1"
-    }
-  },
-  {
-    "id": 38,
-    "type": "taxes",
-    "data": {
-      "price": "666"
-    }
-  },
-  {
-    "id": 39,
-    "type": "street",
-    "data": {
-      "colour": "blue",
-      "name": "пр-кт Космонавтов",
-      "price": 4000,
-      "rent_price": 500,
-      "combo_rent_price": 1000,
-      "one_house_rent_price": 2010,
-      "two_house_rent_price": 6020,
-      "three_house_rent_price": 14030,
-      "four_house_rent_price": 17040,
-      "hostel_rent_price": 20090,
-      "house_price": 2000,
-      "hostel_price": 2000,
-      "assets_path": "assets\\tiles\\blue_2"
-    }
-  }
-]
+  ]
 }
