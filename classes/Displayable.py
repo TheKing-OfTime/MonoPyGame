@@ -42,6 +42,8 @@ class Position(BaseClass):
         self.y = y
         self.length = length
         self.height = height
+        self.default_length = length
+        self.default_height = height
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
     def get_rect(self):
@@ -67,18 +69,40 @@ class Animated(Displayable):
         super().__init__(scene)
         self.pos = Position(scene, length=20, height=20)
         self.assets = []
+        self.core_assets = []
         self.frame = 0
 
     def load_asset(self, asset_dir_path):
         for asset in os.listdir(asset_dir_path):
-            self.assets.append(
-                pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_dir_path + '\\' + asset)
-            )
+            img = pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_dir_path + '\\' + asset)
+            self.assets.append(img)
+            self.pos.length = img.get_width()
+            self.pos.height = img.get_height()
+            self.core_assets.append(img)
 
-    def rescale_assets(self, width, height):
+    def rescale_assets(self, width=None, height=None):
         new_assets = []
-        for asset in self.assets:
-            new_assets.append(pygame.transform.scale(asset, (width, height)))
+        if width is not None:
+            self.pos.length = width
+        if height is not None:
+            self.pos.height = height
+        for asset in self.core_assets:
+            new_assets.append(pygame.transform.smoothscale(asset, (self.pos.length, self.pos.height)))
+        self.assets = new_assets
+        return self.assets
+
+
+    def rescale_assets_by(self, factor):
+        new_assets = []
+        if isinstance(factor, tuple):
+            factor_l = factor[0]
+            factor_h = factor[1]
+        else:
+            factor_l = factor_h = factor
+        self.pos.length = self.pos.length * factor_l
+        self.pos.height = self.pos.height * factor_h
+        for asset in self.core_assets:
+            new_assets.append(pygame.transform.smoothscale_by(asset, factor))
         self.assets = new_assets
         return self.assets
 
@@ -87,9 +111,7 @@ class Animated(Displayable):
             return
         if asset_number is not None:
             self.frame = asset_number
-        if self.assets is None:
-            pygame.draw.rect(self.scene, self.pos.color, self.pos.get_rect())
-        else:
+        if self.assets:
             self.scene.blit(self.assets[self.frame], (self.pos.x, self.pos.y))
 
     def draw_next(self):
@@ -98,3 +120,25 @@ class Animated(Displayable):
         else:
             self.frame = 0
         self.draw()
+
+class DisplayableText(Displayable):
+
+    def __init__(self, scene, text, color=(255, 255, 255)):
+        super().__init__(scene)
+        self.text = text
+        self.font = pygame.font.SysFont('Comic Sans MS', 30)
+        self.color = color
+        self.surface = self.font.render(self.text, True, self.color)
+        self.pos.length = self.pos.default_length = self.surface.get_width()
+        self.pos.height = self.pos.default_height = self.surface.get_height()
+
+    def render(self):
+        self.scene.blit(self.surface, (self.pos.x, self.pos.y))
+
+    def change_text(self, text):
+        if text == self.text:
+            return
+        self.text = text
+        self.surface = self.font.render(self.text, True, self.color)
+        self.pos.length = self.pos.default_length = self.surface.get_width()
+        self.pos.height = self.pos.default_height = self.surface.get_height()

@@ -14,14 +14,16 @@ class Player(Displayable):
     def __init__(self, scene, id):
         super().__init__(scene)
         self.load_asset('assets\\pieces\\playable\\Car.png')
-        self.asset = pygame.transform.scale(self.asset, (32, 32))
+        self.asset = pygame.transform.smoothscale(self.asset, (32, 32))
         self._id = id
+        self.name = "TheKingOfTime"
         self.tile = 0
         self.money = 1500
         self.owned = []
         self.chance_cards = []
         self.comm_ch_cards = []
         self.pos.move_to(322, 41)
+        self.show()
 
     def check(self):
         if self.tile >= 40:
