@@ -14,12 +14,11 @@ class Card(Animated):
     def __init__(self, scene, street_data):
         super().__init__(scene)
         self.deposited = False
-        self.animation_state = "DEFAULT"
         self.colour = street_data["colour"]
         self.name = street_data["name"]
         self.price = street_data["price"]
         self.rent_price = street_data["rent_price"]
-        self.combo_rent_price = street_data["combo_rent_price"]
+        self.combo_rent_price = self.rent_price * 2
         self.one_house_rent_price = street_data["one_house_rent_price"]
         self.two_house_rent_price = street_data["two_house_rent_price"]
         self.three_house_rent_price = street_data["three_house_rent_price"]

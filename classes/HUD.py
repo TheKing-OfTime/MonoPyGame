@@ -31,5 +31,5 @@ class HUD(BaseClass):
 			self.player_name_text.render()
 
 			self.player_money_text.change_text(str(player.money) + '$')
-			self.player_money_text.pos.move_to(self.scene.get_width() - self.player_money_text.pos.length, 30)
+			self.player_money_text.pos.move_to(0, 60)
 			self.player_money_text.render()

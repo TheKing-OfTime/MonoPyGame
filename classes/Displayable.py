@@ -14,6 +14,7 @@ class Displayable(BaseClass):
         self._show: bool = False
         self.pos = Position(scene, length=100, height=100)
         self._show = show
+        self.animation_state = 'DEFAULT'
 
     def load_asset(self, asset_path):
         self.asset = pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_path)
@@ -121,19 +122,22 @@ class Animated(Displayable):
             self.frame = 0
         self.draw()
 
+
 class DisplayableText(Displayable):
 
-    def __init__(self, scene, text, color=(255, 255, 255)):
+    def __init__(self, scene, text, color=(255, 255, 255), size=30):
         super().__init__(scene)
         self.text = text
-        self.font = pygame.font.SysFont('Comic Sans MS', 30)
+        self.font = pygame.font.SysFont('Comic Sans MS', size)
         self.color = color
         self.surface = self.font.render(self.text, True, self.color)
         self.pos.length = self.pos.default_length = self.surface.get_width()
         self.pos.height = self.pos.default_height = self.surface.get_height()
+        self._show = True
 
     def render(self):
-        self.scene.blit(self.surface, (self.pos.x, self.pos.y))
+        if self._show:
+            self.scene.blit(self.surface, (self.pos.x, self.pos.y))
 
     def change_text(self, text):
         if text == self.text:
