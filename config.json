@@ -84,6 +84,76 @@
       "house_price": 1000,
       "hostel_price": 1000,
       "assets_path": "assets\\tiles\\pink_1"
+    },{
+      "colour": "pink",
+      "name": "ул. Коминтерна",
+      "price": 1400,
+      "rent_price": 100,
+      "combo_rent_price": 200,
+      "one_house_rent_price": 500,
+      "two_house_rent_price": 1500,
+      "three_house_rent_price": 4500,
+      "four_house_rent_price": 6250,
+      "hostel_rent_price": 7500,
+      "house_price": 1000,
+      "hostel_price": 1000,
+      "assets_path": ""
+    },{
+      "colour": "pink",
+      "name": "ул. Коммунальная",
+      "price": 1600,
+      "rent_price": 100,
+      "combo_rent_price": 200,
+      "one_house_rent_price": 510,
+      "two_house_rent_price": 1520,
+      "three_house_rent_price": 2730,
+      "four_house_rent_price": 6250,
+      "hostel_rent_price": 7550,
+      "house_price": 1000,
+      "hostel_price": 1000,
+      "assets_path": ""
+    },{
+      "colour": "orange",
+      "name": "ул. Станционная",
+      "price": 1800,
+      "rent_price": 160,
+      "combo_rent_price": 320,
+      "one_house_rent_price": 800,
+      "two_house_rent_price": 2200,
+      "three_house_rent_price": 6000,
+      "four_house_rent_price": 8000,
+      "hostel_rent_price": 10000,
+      "house_price": 1000,
+      "hostel_price": 1000,
+      "assets_path": ""
+    },{
+      "colour": "orange",
+      "name": "ул. Горького",
+      "price": 1800,
+      "rent_price": 160,
+      "combo_rent_price": 320,
+      "one_house_rent_price": 800,
+      "two_house_rent_price": 2200,
+      "three_house_rent_price": 6000,
+      "four_house_rent_price": 8000,
+      "hostel_rent_price": 10000,
+      "house_price": 1000,
+      "hostel_price": 1000,
+      "assets_path": ""
+    },{
+      "colour": "orange",
+      "name": "ул. Дзержинского",
+      "price": 2000,
+      "rent_price": 160,
+      "combo_rent_price": 320,
+      "one_house_rent_price": 810,
+      "two_house_rent_price": 2220,
+      "three_house_rent_price": 6030,
+      "four_house_rent_price": 8090,
+      "hostel_rent_price": 10050,
+      "house_price": 1000,
+      "hostel_price": 1000,
+      "assets_path": ""
     }
   ]
 }
