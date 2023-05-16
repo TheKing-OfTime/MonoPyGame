@@ -43,7 +43,8 @@ class Game(BaseClass):
         self.cards_in_move = []
         self.players = []
         self.current_player = None
-        self.HUD = HUD(scene)
+        self.current_player_id = 0
+        self.HUD = None
         self.init_game()
 
         self.game_state = "DEFAULT"
@@ -56,7 +57,7 @@ class Game(BaseClass):
 
             self.bg.draw()
 
-            self.handle_cards()
+            #self.handle_cards()
 
             self.handle_players()
 
@@ -81,11 +82,13 @@ class Game(BaseClass):
             self.cards.append(self.create_street(tile['data']))
 
     def load_players(self):
-        self.load_player()
+        for i in range(4):
+            self.players.append(self.load_player(i))
+        self.HUD = HUD(self.scene, self.players)
         self.current_player = self.players[0]
 
-    def load_player(self):
-        self.players.append(Player(self.scene, 0))
+    def load_player(self, id):
+        return Player(self.scene, id, "TheKingOfTime" + str(id))
 
     def create_street(self, street_data) -> Card:
         return Card(self.scene, street_data)
@@ -165,6 +168,9 @@ class Game(BaseClass):
                             if card.animation_state == "DEFAULT":
                                 card.animation_state = "IN_DEPOSIT"
                                 self.cards_in_move.append(card)
+            elif event.type == pygame.WINDOWRESIZED:
+                self.handle_window_resize()
+
 
     def handle_players(self):
         for player in self.players:
@@ -198,11 +204,15 @@ class Game(BaseClass):
                 self.current_player.curr_tile += 1
                 if self.current_player.curr_tile > 39:
                     self.current_player.curr_tile -= 40
+                    self.current_player.money += 2000
             player.pos.move_to(*res)
 
         if player.animation_state == 'START':
             if player.curr_tile == player.tile:
                 self.current_player.animation_state = "DEFAULT"
+                target = (self.current_player_id + 1) % 4
+                self.current_player = self.players[target]
+                self.current_player_id = target
                 return
 
             target_pos = player.get_target_pos()
@@ -210,8 +220,15 @@ class Game(BaseClass):
             player.animation_state = 'MOVE'
 
     def handle_HUD(self, state="DEFAULT"):
-        self.HUD.render(state, self.current_player)
+        self.HUD.render(state, self.current_player, self.players)
 
     def handle_dices(self):
         self.dice_glass.first_dice.draw()
         self.dice_glass.second_dice.draw()
+
+    def handle_window_resize(self):
+        shifted = self.bg.update_pos()
+        for player in self.players:
+            player.pos.move(*shifted)
+
+        self.dice_glass.update_pos()

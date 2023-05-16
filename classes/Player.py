@@ -1,9 +1,9 @@
 import pygame
 import numpy as np
-from classes.Displayable import Displayable
+from classes.Displayable import Animated
 
 
-class Player(Displayable):
+class Player(Animated):
 
     action_types = [
         "MOVE",
@@ -19,12 +19,13 @@ class Player(Displayable):
         "START"
     ]
 
-    def __init__(self, scene, id):
+    def __init__(self, scene, id, name="TheKingOfTime"):
         super().__init__(scene)
-        self.load_asset('assets\\pieces\\playable\\Car.png')
-        self.asset = pygame.transform.smoothscale(self.asset, (32, 32))
+        self.frame = id
+        self.load_asset('assets\\pieces\\playable\\highlighted')
+        self.rescale_assets(32, 32)
         self._id = id
-        self.name = "TheKingOfTime"
+        self.name = name
         self.tile = self.curr_tile = 0
         self.memory = {}
         self.money = 1500
@@ -39,7 +40,6 @@ class Player(Displayable):
         self.tile += number
         if self.tile > 39:
             self.tile -= 40
-            self.money += 2000
 
     def get_target_pos(self, number=1):
         target = 0
