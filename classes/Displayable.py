@@ -15,6 +15,7 @@ class Displayable(BaseClass):
         self.pos = Position(scene, length=100, height=100)
         self._show = show
         self.animation_state = 'DEFAULT'
+        self.animation_memory = {}
 
     def load_asset(self, asset_path):
         self.asset = pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_path)
@@ -27,6 +28,8 @@ class Displayable(BaseClass):
             pygame.draw.rect(self.scene, self.pos.color, self.pos.get_rect())
         else:
             self.scene.blit(self.asset, (self.pos.x, self.pos.y))
+    def get_rect(self):
+        return pygame.Rect(self.pos.get_rect())
 
     def show(self):
         self._show = True
@@ -48,7 +51,6 @@ class Position(BaseClass):
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
     def get_rect(self):
-        print(self.x, self.y, self.length, self.height)
         return self.x, self.y, self.length, self.height
 
     def move(self, x, y):
@@ -76,6 +78,8 @@ class Animated(Displayable):
     def load_asset(self, asset_dir_path):
         for asset in os.listdir(asset_dir_path):
             img = pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_dir_path + '\\' + asset)
+            if not asset.endswith('.png'):
+                img = img.convert()
             self.assets.append(img)
             self.pos.length = img.get_width()
             self.pos.height = img.get_height()

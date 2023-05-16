@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 import json
 import time
 from classes.BaseClass import BaseClass
@@ -95,7 +96,7 @@ class Game(BaseClass):
 
     def handle_cards(self):
         self.handle_cards_animation()
-        # for card in self.cards:
+        #for card in self.cards:
         card = self.cards[0]
         card.draw()
 
@@ -147,22 +148,66 @@ class Game(BaseClass):
                     print(self.current_player.pos.x)
                 elif event.key == pygame.K_SPACE:
                     if self.current_player.animation_state == "DEFAULT":
+                        self.current_player.animation_state = "START"
                         res = self.dice_glass.roll_dices()
                         self.current_player.move_to_tile(res)
                 elif event.key == pygame.K_d:
                     if self.cards[0].animation_state == "DEFAULT":
                         self.cards[0].animation_state = "IN_DEPOSIT"
                         self.cards_in_move.append(self.cards[0])
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    for card in self.cards:
+                        if not card._show:
+                            continue
+                        collide = card.get_rect().collidepoint(pygame.mouse.get_pos())
+                        if collide:
+                            if card.animation_state == "DEFAULT":
+                                card.animation_state = "IN_DEPOSIT"
+                                self.cards_in_move.append(card)
 
     def handle_players(self):
         for player in self.players:
             self.handle_player(player)
+        self.handle_player_animation()
 
     def handle_player(self, player):
         player.draw()
 
     def handle_player_animation(self):
-        pass
+        A = 5
+        player = self.current_player
+
+        if player.animation_state == 'MOVE':
+            target_pos = np.array(player.animation_memory['target_pos'])
+            player_pos_g = np.array(player.animation_memory['player_pos'])
+            player_pos = np.array([player.pos.x, player.pos.y])
+            direction = target_pos - player_pos_g
+            direction_x = 0
+            direction_y = 0
+            if direction[0] != 0:
+                direction_x = direction[0]/abs(direction[0])
+            if direction[1] != 0:
+                direction_y = direction[1]/abs(direction[1])
+
+            res = np.array([direction_x * A, direction_y * A]) + player_pos
+            check = (target_pos - res) * np.array([-direction_x, -direction_y])
+            if check[0] > 0 or check[1] > 0:
+                player.animation_state = 'START'
+                res = target_pos
+                self.current_player.curr_tile += 1
+                if self.current_player.curr_tile > 39:
+                    self.current_player.curr_tile -= 40
+            player.pos.move_to(*res)
+
+        if player.animation_state == 'START':
+            if player.curr_tile == player.tile:
+                self.current_player.animation_state = "DEFAULT"
+                return
+
+            target_pos = player.get_target_pos()
+            player.animation_memory = {"target_pos":target_pos, "player_pos": np.array([player.pos.x, player.pos.y])}
+            player.animation_state = 'MOVE'
 
     def handle_HUD(self, state="DEFAULT"):
         self.HUD.render(state, self.current_player)
