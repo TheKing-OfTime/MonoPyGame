@@ -134,7 +134,7 @@ class DisplayableText(Displayable):
     def __init__(self, scene, text, color=(255, 255, 255), size=30, pos=(0, 0)):
         super().__init__(scene)
         self.text = text
-        self.font = pygame.font.SysFont('Comic Sans MS', size)
+        self.font = pygame.font.Font(os.path.abspath(sys.argv[0]).replace('main.py', '') + 'fonts/Myriad Pro/MyriadPro-Light.otf', size) #pygame.font.SysFont('Consolas', size)
         self.color = color
         self.surface = self.font.render(self.text, True, self.color)
         self.pos.length = self.pos.default_length = self.surface.get_width()

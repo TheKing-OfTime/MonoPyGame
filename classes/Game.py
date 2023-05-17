@@ -20,7 +20,7 @@ class Game(BaseClass):
         "CONNECTING"
     ]
 
-    def __init__(self, scene):
+    def __init__(self, scene, player_count=0):
         super().__init__(scene)
         start_time = time.time()
         self.done = False
@@ -37,6 +37,7 @@ class Game(BaseClass):
         pygame.display.flip()
         print("loading...")
 
+        self.p_count = player_count
         self.bg = GameBackground(scene)
         self.cards = []
         self.dice_glass = GlassDice(scene)
@@ -82,7 +83,7 @@ class Game(BaseClass):
             self.cards.append(self.create_street(tile['data']))
 
     def load_players(self):
-        for i in range(4):
+        for i in range(self.p_count):
             self.players.append(self.load_player(i))
         self.HUD = HUD(self.scene, self.players)
         self.current_player = self.players[0]
