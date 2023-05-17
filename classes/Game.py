@@ -20,21 +20,13 @@ class Game(BaseClass):
         "CONNECTING"
     ]
 
-    def __init__(self, scene, player_count=0):
+    def __init__(self, scene, player_count=4):
         super().__init__(scene)
         start_time = time.time()
         self.done = False
-
         self.game_state = "LOADING"
-        self.scene.fill(color=[50, 50, 50])
-        self.loading_text = DisplayableText(self.scene, 'Loading...', size=60)
-        self.loading_text.pos.move_to(
-            (self.scene.get_width()-self.loading_text.pos.length)/2,
-            (self.scene.get_height()-self.loading_text.pos.height)/2
-        )
-        self.loading_text.show()
-        self.loading_text.render()
-        pygame.display.flip()
+        self.HUD = HUD(scene)
+        self.HUD.show_loading()
         print("loading...")
 
         self.p_count = player_count
@@ -45,24 +37,26 @@ class Game(BaseClass):
         self.players = []
         self.current_player = None
         self.current_player_id = 0
-        self.HUD = None
+
         self.init_game()
 
-        self.game_state = "DEFAULT"
-        self.loading_text.hide()
+        self.game_state = "MAIN_MENU"
         print("loaded in: ", round((time.time() - start_time) * 1000), 'ms', sep='')
 
     def run_loop(self):
         while not self.done:
+
             self.handle_events()
 
-            self.bg.draw()
+            if self.game_state == 'DEFAULT':
 
-            #self.handle_cards()
+                self.bg.draw()
 
-            self.handle_players()
+                #self.handle_cards()
 
-            self.handle_dices()
+                self.handle_players()
+
+                self.handle_dices()
 
             self.handle_HUD()
 
@@ -85,7 +79,7 @@ class Game(BaseClass):
     def load_players(self):
         for i in range(self.p_count):
             self.players.append(self.load_player(i))
-        self.HUD = HUD(self.scene, self.players)
+        self.HUD.init_p_cards(self.players)
         self.current_player = self.players[0]
 
     def load_player(self, id):
@@ -97,6 +91,7 @@ class Game(BaseClass):
     def init_game(self):
         self.load_cards()
         self.load_players()
+        self.HUD.init_main_menu_buttons()
 
     def handle_cards(self):
         self.handle_cards_animation()
@@ -138,19 +133,7 @@ class Game(BaseClass):
             if event.type == pygame.QUIT:
                 self.done = True
             elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_UP:
-                    self.current_player.pos.move(0, -1)
-                    print(self.current_player.pos.y)
-                elif event.key == pygame.K_DOWN:
-                    self.current_player.pos.move(0, 1)
-                    print(self.current_player.pos.y)
-                elif event.key == pygame.K_LEFT:
-                    self.current_player.pos.move(-1, 0)
-                    print(self.current_player.pos.x)
-                elif event.key == pygame.K_RIGHT:
-                    self.current_player.pos.move(1, 0)
-                    print(self.current_player.pos.x)
-                elif event.key == pygame.K_SPACE:
+                if event.key == pygame.K_SPACE and self.game_state == 'DEFAULT':
                     if self.current_player.animation_state == "DEFAULT":
                         self.current_player.animation_state = "START"
                         res = self.dice_glass.roll_dices()
@@ -161,14 +144,26 @@ class Game(BaseClass):
                         self.cards_in_move.append(self.cards[0])
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
-                    for card in self.cards:
-                        if not card._show:
-                            continue
-                        collide = card.get_rect().collidepoint(pygame.mouse.get_pos())
-                        if collide:
-                            if card.animation_state == "DEFAULT":
-                                card.animation_state = "IN_DEPOSIT"
-                                self.cards_in_move.append(card)
+                    # for card in reversed(self.cards):
+                    #     if not card._show:
+                    #         continue
+                    #     collide = card.get_rect().collidepoint(pygame.mouse.get_pos())
+                    #     if collide:
+                    #         if card.animation_state == "DEFAULT":
+                    #             card.animation_state = "IN_DEPOSIT"
+                    #             self.cards_in_move.append(card)
+                    #         break
+                    collide = self.HUD.play_button.get_rect().collidepoint(pygame.mouse.get_pos())
+                    if collide:
+                        self.game_state = "DEFAULT"
+
+            elif event.type == pygame.MOUSEMOTION:
+                collide = self.HUD.play_button.get_rect().collidepoint(pygame.mouse.get_pos())
+                if collide:
+                    self.HUD.play_button.highlighted = True
+                else:
+                    self.HUD.play_button.highlighted = False
+
             elif event.type == pygame.WINDOWRESIZED:
                 self.handle_window_resize()
 
@@ -220,8 +215,8 @@ class Game(BaseClass):
             player.animation_memory = {"target_pos":target_pos, "player_pos": np.array([player.pos.x, player.pos.y])}
             player.animation_state = 'MOVE'
 
-    def handle_HUD(self, state="DEFAULT"):
-        self.HUD.render(state, self.current_player, self.players)
+    def handle_HUD(self):
+        self.HUD.render(self.game_state, self.current_player, self.players)
 
     def handle_dices(self):
         self.dice_glass.first_dice.draw()

@@ -39,6 +39,15 @@ class Displayable(BaseClass):
     def hide(self):
         self._show = False
 
+    def rescale_asset(self, width=None, height=None):
+        if width is not None:
+            self.pos.length = width
+        if height is not None:
+            self.pos.height = height
+
+        self.asset = pygame.transform.smoothscale(self.asset, (self.pos.length, self.pos.height))
+        return self.asset
+
 
 class Position(BaseClass):
 
