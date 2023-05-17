@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 
 from classes.BaseClass import BaseClass
 from classes.Displayable import DisplayableText, Displayable
@@ -19,6 +20,9 @@ class HUD(BaseClass):
 		self.player_cards = []
 		self.buttons = []
 		self.play_button = None
+		self.pc_2 = None
+		self.pc_3 = None
+		self.pc_4 = None
 
 	def init_p_cards(self, players):
 		i = 0
@@ -27,11 +31,24 @@ class HUD(BaseClass):
 			i+=1
 
 	def init_main_menu_buttons(self):
-		self.play_button = Button(self.scene, 'assets/pieces/dices/Dices_1.png', 'Play', (200, 100, 10))
-		self.play_button.pos.x = (self.scene.get_width() / 2) - (self.play_button.pos.length / 2)
-		self.play_button.pos.y = (self.scene.get_height() / 2) - (self.play_button.pos.height / 2)
-		self.play_button.repos()
+		self.play_button = Button(self.scene, 'play', 'assets/pieces/dices/Dices_1.png', 'Play', (200, 100, 10))
 		self.play_button.icon.show()
+
+		self.pc_2 = Button(self.scene, 'radio_pc_2', 'assets/pieces/dices/Dices_2.png', gab=(60, 60, 10))
+		self.pc_2.icon.show()
+
+		self.pc_3 = Button(self.scene, 'radio_pc_3', 'assets/pieces/dices/Dices_3.png', gab=(60, 60, 10))
+		self.pc_3.icon.show()
+
+		self.pc_4 = Button(self.scene, 'radio_pc_4', 'assets/pieces/dices/Dices_4.png', gab=(60, 60, 10))
+		self.pc_4.icon.show()
+
+		self.repos("MAIN_MENU")
+		self.buttons.append(self.play_button)
+		self.buttons.append(self.pc_2)
+		self.buttons.append(self.pc_3)
+		self.buttons.append(self.pc_4)
+
 
 
 	def render(self, state="DEFAULT", player=None, players=None):
@@ -44,8 +61,10 @@ class HUD(BaseClass):
 			self.show_loading()
 
 		elif state == "MAIN_MENU":
-			if self.play_button:
-				self.play_button.render()
+			self.play_button.render()
+			self.pc_2.render()
+			self.pc_3.render()
+			self.pc_4.render()
 
 	def show_loading(self):
 		self.scene.fill(color=[50, 50, 50])
@@ -58,6 +77,20 @@ class HUD(BaseClass):
 		loading_text.render()
 		pygame.display.flip()
 
+	def repos(self, state="DEFAULT"):
+		if state == "MAIN_MENU":
+			self.play_button.pos.x = (self.scene.get_width() / 2) - (self.play_button.pos.length / 2)
+			self.play_button.pos.y = (self.scene.get_height() / 2) - (self.play_button.pos.height / 2)
+			self.play_button.repos()
+
+			pc_row_y = self.play_button.pos.y + self.play_button.pos.height + 10
+
+			self.pc_2.pos.move_to(self.play_button.pos.x, pc_row_y)
+			self.pc_2.repos()
+			self.pc_3.pos.move_to(self.pc_2.pos.x + self.pc_2.pos.length + 10, pc_row_y)
+			self.pc_3.repos()
+			self.pc_4.pos.move_to(self.pc_3.pos.x + self.pc_2.pos.length + 10, pc_row_y)
+			self.pc_4.repos()
 
 class UIElement(Displayable):
 
@@ -66,6 +99,7 @@ class UIElement(Displayable):
 		self.colour = (204, 227, 198)
 		self.border_radius = 0
 		self.highlighted = False
+		self.darkened = False
 
 	def render_highlighted(self):
 		if self.highlighted:
@@ -78,12 +112,14 @@ class UIElement(Displayable):
 							 border_radius=self.border_radius + 2)
 
 	def render_base(self):
-		pygame.draw.rect(self.scene, self.colour, self.pos.get_rect(), border_radius=self.border_radius)
+		color = np.array(self.colour) - (np.array((50, 50, 50)) * int(self.darkened))
+		pygame.draw.rect(self.scene, color, self.pos.get_rect(), border_radius=self.border_radius)
 
 class Button(UIElement):
 
-	def __init__(self, scene, asset_path=None, text=None, gab=(200, 100, 20)):
+	def __init__(self, scene, type, asset_path=None, text=None, gab=(200, 100, 20)):
 		super().__init__(scene)
+		self.type = type
 
 		if not asset_path and not text:
 			text = 'Test'
@@ -167,4 +203,4 @@ class PlayerCard(UIElement):
 			self.pos.y + 5)
 		self.player_money_text.render()
 
-		self.scene.blit(pygame.transform.smoothscale_by(player.core_assets[player._id], 0.2), (self.pos.x + 5, self.pos.y + 5))
+		self.scene.blit(pygame.transform.smoothscale_by(player.core_assets[player.frame], 0.2), (self.pos.x + 5, self.pos.y + 5))

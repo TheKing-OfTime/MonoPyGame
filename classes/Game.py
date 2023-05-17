@@ -8,7 +8,6 @@ from classes.GameBackgroud import GameBackground
 from classes.Card import Card
 from classes.HUD import HUD
 from classes.Dice import GlassDice
-from classes.Displayable import DisplayableText
 
 
 class Game(BaseClass):
@@ -38,7 +37,7 @@ class Game(BaseClass):
         self.current_player = None
         self.current_player_id = 0
 
-        self.init_game()
+        self.HUD.init_main_menu_buttons()
 
         self.game_state = "MAIN_MENU"
         print("loaded in: ", round((time.time() - start_time) * 1000), 'ms', sep='')
@@ -91,16 +90,14 @@ class Game(BaseClass):
     def init_game(self):
         self.load_cards()
         self.load_players()
-        self.HUD.init_main_menu_buttons()
 
     def handle_cards(self):
         self.handle_cards_animation()
-        #for card in self.cards:
-        card = self.cards[0]
-        card.draw()
+        for card in self.cards:
+            card.draw()
 
-        if not card._show:
-            card.show()
+            if not card._show:
+                card.show()
 
     def handle_cards_animation(self):
         for card in self.cards_in_move:
@@ -144,18 +141,26 @@ class Game(BaseClass):
                         self.cards_in_move.append(self.cards[0])
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
-                    # for card in reversed(self.cards):
-                    #     if not card._show:
-                    #         continue
-                    #     collide = card.get_rect().collidepoint(pygame.mouse.get_pos())
-                    #     if collide:
-                    #         if card.animation_state == "DEFAULT":
-                    #             card.animation_state = "IN_DEPOSIT"
-                    #             self.cards_in_move.append(card)
-                    #         break
-                    collide = self.HUD.play_button.get_rect().collidepoint(pygame.mouse.get_pos())
-                    if collide:
-                        self.game_state = "DEFAULT"
+                    if self.game_state == "DEFAULT":
+                        for card in reversed(self.cards):
+                            if not card._show:
+                                continue
+                            collide = card.get_rect().collidepoint(pygame.mouse.get_pos())
+                            if collide:
+                                if card.animation_state == "DEFAULT":
+                                    card.animation_state = "IN_DEPOSIT"
+                                    self.cards_in_move.append(card)
+                                break
+                    elif self.game_state == "MAIN_MENU":
+                        for btn in self.HUD.buttons:
+                            btn.darkened = False
+                            if btn.type == 'play':
+                                collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
+                                if collide:
+                                    self.game_state = "LOADING"
+                                    self.HUD.show_loading()
+                                    self.init_game()
+                                    self.game_state = "DEFAULT"
 
             elif event.type == pygame.MOUSEMOTION:
                 collide = self.HUD.play_button.get_rect().collidepoint(pygame.mouse.get_pos())
@@ -163,6 +168,12 @@ class Game(BaseClass):
                     self.HUD.play_button.highlighted = True
                 else:
                     self.HUD.play_button.highlighted = False
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                for btn in self.HUD.buttons:
+                    collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
+                    if collide:
+                        btn.darkened = True
 
             elif event.type == pygame.WINDOWRESIZED:
                 self.handle_window_resize()
@@ -206,7 +217,7 @@ class Game(BaseClass):
         if player.animation_state == 'START':
             if player.curr_tile == player.tile:
                 self.current_player.animation_state = "DEFAULT"
-                target = (self.current_player_id + 1) % 4
+                target = (self.current_player_id + 1) % len(self.players)
                 self.current_player = self.players[target]
                 self.current_player_id = target
                 return
@@ -228,3 +239,4 @@ class Game(BaseClass):
             player.pos.move(*shifted)
 
         self.dice_glass.update_pos()
+        self.HUD.repos(self.game_state)

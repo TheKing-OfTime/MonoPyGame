@@ -21,7 +21,7 @@ class Player(Animated):
 
     def __init__(self, scene, id, name="TheKingOfTime"):
         super().__init__(scene)
-        self.frame = id
+        self.frame = id % 5
         self.load_asset('assets\\pieces\\playable\\highlighted')
         self.rescale_assets(32, 32)
         self._id = id
