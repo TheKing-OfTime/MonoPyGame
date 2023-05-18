@@ -138,10 +138,10 @@ class Game(BaseClass):
                         self.current_player.animation_state = "START"
                         res = self.dice_glass.roll_dices()
                         self.current_player.move_to_tile(res)
-                elif event.key == pygame.K_d:
-                    if self.cards[0].animation_state == "DEFAULT":
-                        self.cards[0].animation_state = "IN_DEPOSIT"
-                        self.cards_in_move.append(self.cards[0])
+                # elif event.key == pygame.K_d:
+                #     if self.cards[0].animation_state == "DEFAULT":
+                #         self.cards[0].animation_state = "IN_DEPOSIT"
+                #         self.cards_in_move.append(self.cards[0])
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     if self.game_state == "DEFAULT":
@@ -228,6 +228,8 @@ class Game(BaseClass):
             if player.curr_tile == player.tile:
                 self.current_player.animation_state = "DEFAULT"
                 target = (self.current_player_id + 1) % len(self.players)
+                if self.dice_glass.first_dice.value == self.dice_glass.second_dice.value:
+                    target = self.current_player_id
                 self.current_player = self.players[target]
                 self.current_player_id = target
                 return
