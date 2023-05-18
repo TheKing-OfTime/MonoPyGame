@@ -19,6 +19,13 @@ class Game(BaseClass):
         "CONNECTING"
     ]
 
+    TURN_STATES = [
+        'ROLL',
+        'MOVE',
+        'OPTIONAL_ACTIONS',
+        'NEXT_PLAYER'
+    ]
+
     def __init__(self, scene, player_count=4):
         super().__init__(scene)
         start_time = time.time()
@@ -36,9 +43,10 @@ class Game(BaseClass):
         self.cards_in_move = []
         self.players = []
         self.current_player = None
+        self.current_turn = self.TURN_STATES[0]
         self.current_player_id = 0
 
-        self.HUD.init_main_menu_buttons()
+        self.HUD.init_main_menu()
 
         self.game_state = "MAIN_MENU"
         print("loaded in: ", round((time.time() - start_time) * 1000), 'ms', sep='')
@@ -81,7 +89,7 @@ class Game(BaseClass):
             p = self.load_player(i)
             p.pos.move(*self.p_pos_shifted)
             self.players.append(p)
-        self.HUD.init_p_cards(self.players)
+        self.HUD.init_default(self.players)
         self.current_player = self.players[0]
 
     def load_player(self, id):
@@ -134,14 +142,15 @@ class Game(BaseClass):
                 self.done = True
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE and self.game_state == 'DEFAULT':
-                    if self.current_player.animation_state == "DEFAULT":
-                        self.current_player.animation_state = "START"
-                        res = self.dice_glass.roll_dices()
-                        self.current_player.move_to_tile(res)
+                    self.HUD.next_turn_button.darkened = False
+                    self.next_turn()
                 # elif event.key == pygame.K_d:
                 #     if self.cards[0].animation_state == "DEFAULT":
                 #         self.cards[0].animation_state = "IN_DEPOSIT"
                 #         self.cards_in_move.append(self.cards[0])
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and self.game_state == 'DEFAULT':
+                    self.HUD.next_turn_button.darkened = True
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     if self.game_state == "DEFAULT":
@@ -154,12 +163,13 @@ class Game(BaseClass):
                                     card.animation_state = "IN_DEPOSIT"
                                     self.cards_in_move.append(card)
                                 break
-                    elif self.game_state == "MAIN_MENU":
-                        for btn in self.HUD.buttons:
-                            btn.darkened = False
-                            collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
-                            if collide:
-                                if btn.type == 'play':
+
+                    for btn in self.HUD.buttons:
+                        btn.darkened = False
+                        collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
+                        if collide:
+                            if self.game_state == "MAIN_MENU":
+                                if btn.type == 'regular_play':
                                     self.game_state = "LOADING"
                                     self.HUD.show_loading()
                                     self.init_game()
@@ -172,12 +182,20 @@ class Game(BaseClass):
                                             continue
                                         rbtn.highlighted = False
 
+                            elif self.game_state == 'DEFAULT':
+                                if btn.type == 'regular_next_turn':
+                                    self.next_turn()
+
+
             elif event.type == pygame.MOUSEMOTION:
-                collide = self.HUD.play_button.get_rect().collidepoint(pygame.mouse.get_pos())
-                if collide:
-                    self.HUD.play_button.highlighted = True
-                else:
-                    self.HUD.play_button.highlighted = False
+                for btn in self.HUD.buttons:
+                    if btn.type.startswith('radio'):
+                        continue
+                    collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
+                    if collide:
+                        btn.highlighted = True
+                    else:
+                        btn.highlighted = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 for btn in self.HUD.buttons:
@@ -188,6 +206,33 @@ class Game(BaseClass):
             elif event.type == pygame.WINDOWRESIZED:
                 self.handle_window_resize()
 
+    def next_turn(self):
+        next_turn = self.TURN_STATES[(self.TURN_STATES.index(self.current_turn) + 1) % len(self.TURN_STATES)]
+        target_turn = next_turn
+
+        if self.current_turn == self.TURN_STATES[0]:
+            self.dice_glass.roll_dices()
+            self.HUD.next_turn_button.change_text('Двигать фишку')
+        elif self.current_turn == self.TURN_STATES[1]:
+            target_turn = self.current_turn
+            if self.current_player.animation_state == "DEFAULT":
+                self.current_player.animation_state = "START"
+                self.current_player.move_to_tile(self.dice_glass.get_value())
+            elif self.current_player.animation_state == "END":
+                target_turn = next_turn
+                self.current_player.animation_state = "DEFAULT"
+                self.HUD.next_turn_button.change_text('Пропустить')
+        elif self.current_turn == self.TURN_STATES[2]:
+            self.HUD.next_turn_button.change_text('Передать ход')
+        elif self.current_turn == self.TURN_STATES[3]:
+            target = (self.current_player_id + 1) % len(self.players)
+            if self.dice_glass.first_dice.value == self.dice_glass.second_dice.value:
+                target = self.current_player_id
+            self.current_player = self.players[target]
+            self.current_player_id = target
+            self.HUD.next_turn_button.change_text('Кинуть кубики')
+
+        self.current_turn = target_turn
 
     def handle_players(self):
         for player in self.players:
@@ -226,12 +271,8 @@ class Game(BaseClass):
 
         if player.animation_state == 'START':
             if player.curr_tile == player.tile:
-                self.current_player.animation_state = "DEFAULT"
-                target = (self.current_player_id + 1) % len(self.players)
-                if self.dice_glass.first_dice.value == self.dice_glass.second_dice.value:
-                    target = self.current_player_id
-                self.current_player = self.players[target]
-                self.current_player_id = target
+                self.current_player.animation_state = "END"
+                self.next_turn()
                 return
 
             target_pos = player.get_target_pos()

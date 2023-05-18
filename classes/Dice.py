@@ -27,6 +27,9 @@ class GlassDice(Displayable):
         result = self.first_dice.roll() + self.second_dice.roll()
         return result
 
+    def get_value(self):
+        return self.first_dice.value + self.second_dice.value
+
     def update_pos(self):
         shift = 5
         w = self.scene.get_width()

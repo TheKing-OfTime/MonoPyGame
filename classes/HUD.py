@@ -19,19 +19,24 @@ class HUD(BaseClass):
 		self.state = "DEFAULT"
 		self.player_cards = []
 		self.buttons = []
+		self.game_title = None
 		self.play_button = None
+		self.next_turn_button = None
 		self.pc_2 = None
 		self.pc_3 = None
 		self.pc_4 = None
 
-	def init_p_cards(self, players):
+	def init_default(self, players):
 		i = 0
 		for player in players:
 			self.player_cards.append(PlayerCard(self.scene, i))
 			i+=1
+		self.next_turn_button = Button(self.scene, 'regular_next_turn', text='Следующий ход', gab=(250, 50, 10), text_size=30)
+		self.buttons = [self.next_turn_button]
+		self.repos()
 
-	def init_main_menu_buttons(self):
-		self.play_button = Button(self.scene, 'play', 'assets/pieces/dices/Dices_1.png', 'Play', (200, 100, 10))
+	def init_main_menu(self):
+		self.play_button = Button(self.scene, 'regular_play', 'assets/BUTT.png', 'Play', (200, 100, 10), text_size=50, icon_size=75)
 		self.play_button.icon.show()
 
 		self.pc_2 = Button(self.scene, 'radio_pc_2', 'assets/pieces/dices/Dices_2.png', gab=(60, 60, 10))
@@ -44,11 +49,19 @@ class HUD(BaseClass):
 		self.pc_4.icon.show()
 		self.pc_4.highlighted = True
 
+		self.game_title = Displayable(self.scene)
+		self.game_title.show()
+		self.game_title.load_asset('assets/LOGO.png')
+		self.game_title.rescale_asset_by(0.5)
+
 		self.repos("MAIN_MENU")
+		self.buttons = []
 		self.buttons.append(self.play_button)
 		self.buttons.append(self.pc_2)
 		self.buttons.append(self.pc_3)
 		self.buttons.append(self.pc_4)
+
+
 
 
 
@@ -57,15 +70,16 @@ class HUD(BaseClass):
 		if state == "DEFAULT":
 			for player_card in self.player_cards:
 				player_card.render(players[player_card.pid], player)
+			for btn in self.buttons:
+				btn.render()
 
 		elif state == "LOADING":
 			self.show_loading()
 
 		elif state == "MAIN_MENU":
-			self.play_button.render()
-			self.pc_2.render()
-			self.pc_3.render()
-			self.pc_4.render()
+			for btn in self.buttons:
+				btn.render()
+			self.game_title.draw()
 
 	def show_loading(self):
 		self.scene.fill(color=[50, 50, 50])
@@ -93,6 +107,18 @@ class HUD(BaseClass):
 			self.pc_4.pos.move_to(self.pc_3.pos.x + self.pc_2.pos.length + 10, pc_row_y)
 			self.pc_4.repos()
 
+			self.game_title.pos.move_to(
+				(self.scene.get_width() - self.game_title.pos.length) / 2,
+				(self.scene.get_height() / 4) - (self.game_title.pos.height / 2)
+			)
+
+		elif state == "DEFAULT":
+
+			self.next_turn_button.pos.move_to(5, self.scene.get_height() - self.next_turn_button.pos.height - 5)
+			for btn in self.buttons:
+				btn.repos()
+
+
 class UIElement(Displayable):
 
 	def __init__(self, scene):
@@ -118,7 +144,7 @@ class UIElement(Displayable):
 
 class Button(UIElement):
 
-	def __init__(self, scene, type, asset_path=None, text=None, gab=(200, 100, 20)):
+	def __init__(self, scene, type, asset_path=None, text=None, gab=(200, 100, 20), text_size=40, icon_size=50):
 		super().__init__(scene)
 		self.type = type
 
@@ -127,13 +153,13 @@ class Button(UIElement):
 
 		self.label = None
 		if text:
-			self.label = DisplayableText(scene, text, size=40, color=(0, 0, 0))
+			self.label = DisplayableText(scene, text, size=text_size, color=(0, 0, 0))
 
 		self.icon = None
 		if asset_path:
 			self.icon = Displayable(scene)
 			self.icon.load_asset(asset_path)
-			self.icon.rescale_asset(50, 50)
+			self.icon.rescale_asset(icon_size, icon_size)
 		self.pos.length = gab[0]
 		self.pos.height = gab[1]
 		self.border_radius = gab[2]
@@ -171,6 +197,29 @@ class Button(UIElement):
 			self.label.render()
 		if self.icon:
 			self.icon.draw()
+
+# class PlayButton(Button):
+# 	def __init__(self, scene, type, asset_path, gab=(200, 100, 20)):
+# 		super().__init__(scene, type, asset_path, None, gab)
+# 		self.icon.rescale_asset_by(4)
+#
+# 	def repos(self):
+# 		self.icon.pos.move_to(self.pos.x, self.pos.y)
+#
+# 	def render_highlighted(self):
+# 		if self.highlighted:
+# 			pygame.Rect(self.scene, (255, 255, 255),
+# 							 (self.pos.x - 4, self.pos.y - 4, self.pos.length + 8, self.pos.height + 8),
+# 							 border_radius=self.border_radius + 4)
+#
+# 			pygame.draw.rect(self.scene, (50, 50, 50),
+# 							 (self.pos.x - 2, self.pos.y - 2, self.pos.length + 4, self.pos.height + 4),
+# 							 border_radius=self.border_radius + 2)
+# 	def render(self):
+# 		self.render_highlighted()
+#
+# 		self.icon.draw()
+
 
 class PlayerCard(UIElement):
 
