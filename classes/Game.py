@@ -29,6 +29,7 @@ class Game(BaseClass):
         print("loading...")
 
         self.p_count = player_count
+        self.p_pos_shifted = np.array([0, 0])
         self.bg = GameBackground(scene)
         self.cards = []
         self.dice_glass = GlassDice(scene)
@@ -77,7 +78,9 @@ class Game(BaseClass):
 
     def load_players(self):
         for i in range(self.p_count):
-            self.players.append(self.load_player(i))
+            p = self.load_player(i)
+            p.pos.move(*self.p_pos_shifted)
+            self.players.append(p)
         self.HUD.init_p_cards(self.players)
         self.current_player = self.players[0]
 
@@ -154,13 +157,20 @@ class Game(BaseClass):
                     elif self.game_state == "MAIN_MENU":
                         for btn in self.HUD.buttons:
                             btn.darkened = False
-                            if btn.type == 'play':
-                                collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
-                                if collide:
+                            collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
+                            if collide:
+                                if btn.type == 'play':
                                     self.game_state = "LOADING"
                                     self.HUD.show_loading()
                                     self.init_game()
                                     self.game_state = "DEFAULT"
+                                elif btn.type.startswith('radio'):
+                                    btn.highlighted = True
+                                    self.p_count = int(btn.type.split('_')[2])
+                                    for rbtn in self.HUD.buttons:
+                                        if rbtn.type == btn.type:
+                                            continue
+                                        rbtn.highlighted = False
 
             elif event.type == pygame.MOUSEMOTION:
                 collide = self.HUD.play_button.get_rect().collidepoint(pygame.mouse.get_pos())
@@ -234,9 +244,9 @@ class Game(BaseClass):
         self.dice_glass.second_dice.draw()
 
     def handle_window_resize(self):
-        shifted = self.bg.update_pos()
+        self.p_pos_shifted = np.array(self.bg.update_pos())
         for player in self.players:
-            player.pos.move(*shifted)
+            player.pos.move(*self.p_pos_shifted)
 
         self.dice_glass.update_pos()
         self.HUD.repos(self.game_state)

@@ -42,6 +42,7 @@ class HUD(BaseClass):
 
 		self.pc_4 = Button(self.scene, 'radio_pc_4', 'assets/pieces/dices/Dices_4.png', gab=(60, 60, 10))
 		self.pc_4.icon.show()
+		self.pc_4.highlighted = True
 
 		self.repos("MAIN_MENU")
 		self.buttons.append(self.play_button)
