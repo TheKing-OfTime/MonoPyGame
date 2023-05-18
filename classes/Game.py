@@ -53,7 +53,7 @@ class Game(BaseClass):
 
     def run_loop(self):
         while not self.done:
-
+            frame_time = time.time()
             self.handle_events()
 
             if self.game_state == 'DEFAULT':
@@ -69,7 +69,7 @@ class Game(BaseClass):
             self.handle_HUD()
 
             pygame.display.flip()
-            pygame.time.wait(10)
+            pygame.time.wait(max(10 - round((time.time() - frame_time) * 1000), 0))
             self.scene.fill(color=[50, 50, 50])
 
     def load_cards(self):
@@ -198,6 +198,7 @@ class Game(BaseClass):
                     collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
                     if collide:
                         btn.highlighted = True
+                        break
                     else:
                         btn.highlighted = False
 
@@ -228,9 +229,11 @@ class Game(BaseClass):
             elif self.current_player.animation_state == "END":
                 target_turn = next_turn
                 self.current_player.animation_state = "DEFAULT"
+                self.HUD.overlays[0].appear()
                 self.HUD.next_turn_button.change_text('Пропустить')
                 self.HUD.next_turn_button.disabled = False
         elif self.current_turn == self.TURN_STATES[2]:
+            self.HUD.overlays[0].disappear()
             txt = 'Передать ход'
             if self.dice_glass.first_dice.value == self.dice_glass.second_dice.value:
                 txt = "Продолжить ход"

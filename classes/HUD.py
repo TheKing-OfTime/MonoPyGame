@@ -19,6 +19,7 @@ class HUD(BaseClass):
 		self.state = "DEFAULT"
 		self.player_cards = []
 		self.buttons = []
+		self.overlays = []
 		self.game_title = None
 		self.play_button = None
 		self.next_turn_button = None
@@ -29,24 +30,32 @@ class HUD(BaseClass):
 	def init_default(self, players):
 		i = 0
 		for player in players:
-			self.player_cards.append(PlayerCard(self.scene, i))
+			self.player_cards.append(PlayerCard(self.scene, self, i))
 			i+=1
-		self.next_turn_button = Button(self.scene, 'regular_next_turn', text='Бросить кости', gab=(250, 50, 10), text_size=30)
+		self.next_turn_button = Button(self.scene, self, 'regular_next_turn', text='Бросить кости', gab=(250, 50, 10), text_size=30)
+		self.next_turn_button.show()
 		self.buttons = [self.next_turn_button]
+		self.overlays = [
+			Modal(self.scene,
+				  self,
+				  'Test',
+				  y_btn=Button(self.scene, self, 'regular_modal_test_yes', text='Окей!'),
+				  n_btn=Button(self.scene, self, 'regular_modal_test_no', text='Отмена!'))
+		]
 		self.repos()
 
 	def init_main_menu(self):
-		self.play_button = Button(self.scene, 'regular_play', 'assets/BUTT.png', 'Play', (200, 100, 10), text_size=50, icon_size=75)
-		self.play_button.icon.show()
+		self.play_button = Button(self.scene, self, 'regular_play', 'assets/BUTT.png', 'Play', (200, 100, 10), text_size=50, icon_size=75)
+		self.play_button.show()
 
-		self.pc_2 = Button(self.scene, 'radio_pc_2', 'assets/pieces/dices/Dices_2.png', gab=(60, 60, 10))
-		self.pc_2.icon.show()
+		self.pc_2 = Button(self.scene, self, 'radio_pc_2', 'assets/pieces/dices/Dices_2.png', gab=(60, 60, 10))
+		self.pc_2.show()
 
-		self.pc_3 = Button(self.scene, 'radio_pc_3', 'assets/pieces/dices/Dices_3.png', gab=(60, 60, 10))
-		self.pc_3.icon.show()
+		self.pc_3 = Button(self.scene, self, 'radio_pc_3', 'assets/pieces/dices/Dices_3.png', gab=(60, 60, 10))
+		self.pc_3.show()
 
-		self.pc_4 = Button(self.scene, 'radio_pc_4', 'assets/pieces/dices/Dices_4.png', gab=(60, 60, 10))
-		self.pc_4.icon.show()
+		self.pc_4 = Button(self.scene, self, 'radio_pc_4', 'assets/pieces/dices/Dices_4.png', gab=(60, 60, 10))
+		self.pc_4.show()
 		self.pc_4.highlighted = True
 
 		self.game_title = Displayable(self.scene)
@@ -62,24 +71,33 @@ class HUD(BaseClass):
 		self.buttons.append(self.pc_4)
 
 
-
-
-
 	def render(self, state="DEFAULT", player=None, players=None):
 
 		if state == "DEFAULT":
-			for player_card in self.player_cards:
-				player_card.render(players[player_card.pid], player)
-			for btn in self.buttons:
-				btn.render()
+			self.render_player_cards(player, players)
+			self.render_buttons()
+			self.render_overlays()
+
 
 		elif state == "LOADING":
 			self.show_loading()
 
 		elif state == "MAIN_MENU":
-			for btn in self.buttons:
-				btn.render()
+			self.render_buttons()
 			self.game_title.draw()
+
+	def render_player_cards(self, player, players):
+		for player_card in self.player_cards:
+			player_card.render(players[player_card.pid], player)
+
+	def render_buttons(self):
+		for btn in self.buttons:
+			if btn._show:
+				btn.render()
+
+	def render_overlays(self):
+		for overlay in self.overlays:
+			overlay.render()
 
 	def show_loading(self):
 		self.scene.fill(color=[50, 50, 50])
@@ -117,13 +135,16 @@ class HUD(BaseClass):
 			self.next_turn_button.pos.move_to(5, self.scene.get_height() - self.next_turn_button.pos.height - 5)
 			for btn in self.buttons:
 				btn.repos()
+			for overlay in self.overlays:
+				overlay.repos()
 
 
 class UIElement(Displayable):
 
-	def __init__(self, scene):
+	def __init__(self, scene, HUD):
 		super().__init__(scene)
 		self.colour = (204, 227, 198)
+		self.HUD = HUD
 		self.border_radius = 0
 		self.highlighted = False
 		self.darkened = False
@@ -143,10 +164,19 @@ class UIElement(Displayable):
 		color = np.array(self.colour) - (np.array((50, 50, 50)) * int(self.darkened)) - (np.array((100, 100, 100)) * int(self.disabled))
 		pygame.draw.rect(self.scene, color, self.pos.get_rect(), border_radius=self.border_radius)
 
+	def render(self):
+		self.render_base()
+
+	def repos(self):
+		pass
+
+	def handle_animation(self):
+		pass
+
 class Button(UIElement):
 
-	def __init__(self, scene, type, asset_path=None, text=None, gab=(200, 100, 20), text_size=40, icon_size=50):
-		super().__init__(scene)
+	def __init__(self, scene, HUD, type, asset_path=None, text=None, gab=(200, 100, 20), text_size=40, icon_size=50):
+		super().__init__(scene, HUD)
 		self.type = type
 
 		if not asset_path and not text:
@@ -199,6 +229,21 @@ class Button(UIElement):
 		if self.icon:
 			self.icon.draw()
 
+	def show(self):
+		super().show()
+		if self.label:
+			self.label.show()
+		if self.icon:
+			self.icon.show()
+
+	def hide(self):
+		super().hide()
+		if self.label:
+			self.label.hide()
+		if self.icon:
+			self.icon.hide()
+
+
 # class PlayButton(Button):
 # 	def __init__(self, scene, type, asset_path, gab=(200, 100, 20)):
 # 		super().__init__(scene, type, asset_path, None, gab)
@@ -224,8 +269,8 @@ class Button(UIElement):
 
 class PlayerCard(UIElement):
 
-	def __init__(self, scene, pid):
-		super().__init__(scene)
+	def __init__(self, scene, HUD, pid):
+		super().__init__(scene, HUD)
 		self.pid = pid
 		self.border_radius = 10
 		self.pos.height = 150
@@ -255,3 +300,127 @@ class PlayerCard(UIElement):
 		self.player_money_text.render()
 
 		self.scene.blit(pygame.transform.smoothscale_by(player.core_assets[player.frame], 0.2), (self.pos.x + 5, self.pos.y + 5))
+
+
+class Overlay(UIElement):
+	def __init__(self, scene, HUD):
+		super().__init__(scene, HUD)
+		self.ui_elements = []
+		self.surface = pygame.Surface((self.pos.length,self.pos.height))
+		self.colour = (0, 0, 0)
+		self.alpha = 0
+		self.animation_speed = 8
+		self.target_alpha = 128
+		self.border_radius = 0
+
+	def appear(self):
+		if self.animation_state == "DEFAULT":
+			self.animation_state = "APPEARING"
+
+	def disappear(self):
+		if self.animation_state == "DEFAULT":
+			self.animation_state = "DISAPPEARING"
+
+	def handle_animation(self):
+		if self.animation_state == "APPEARING":
+			self.alpha += self.animation_speed
+			if self.alpha >= self.target_alpha:
+				self.alpha = self.target_alpha
+				self.animation_state = "DEFAULT"
+				for el in self.ui_elements:
+					el.show()
+
+		elif self.animation_state == "DISAPPEARING":
+			self.alpha -= self.animation_speed
+			if self.alpha <= 0:
+				self.alpha = 0
+				self.animation_state = "DEFAULT"
+				for el in self.ui_elements:
+					el.hide()
+
+
+		# for el in self.ui_elements:
+		# 	el.handle_animation()
+
+	def render_base(self):
+		self.surface.fill(self.colour)
+		self.surface.set_alpha(self.alpha)
+		self.scene.blit(self.surface, (0, 0))
+
+	def render(self):
+		if self.animation_state != "DEFAULT":
+			self.handle_animation()
+		self.render_base()
+
+	def base_repos(self):
+		self.pos.height = self.scene.get_height()
+		self.pos.length = self.scene.get_width()
+		self.surface = pygame.Surface((self.pos.length, self.pos.height))
+
+class Modal(Overlay):
+	def __init__(self, scene, HUD, title, y_btn, description=None, n_btn=None):
+		super().__init__(scene, HUD)
+		self.bg = UIElement(scene, HUD)
+		self.bg.colour = (50, 50, 50)
+		self.bg.pos.length = 500
+		self.bg.pos.height = 400
+		self.bg.border_radius = 10
+		self.title = DisplayableText(scene, title, size=50)
+		self.title.hide()
+
+		self.y_btn = y_btn
+		self.y_btn.hide()
+		self.HUD.buttons.append(self.y_btn)
+
+		self.ui_elements = [
+			self.bg,
+			self.title,
+			self.y_btn
+		]
+
+		if n_btn is not None:
+			self.n_btn = n_btn
+			self.y_btn.hide()
+			self.ui_elements.append(self.n_btn)
+			self.HUD.buttons.append(self.n_btn)
+
+		self.repos()
+
+	def render(self):
+		if self.animation_state != "DEFAULT":
+			self.handle_animation()
+		self.render_base()
+
+		for el in self.ui_elements:
+			if el.animation_state != "DEFAULT":
+				el.handle_animation()
+			if el._show:
+				el.render()
+
+	def repos(self):
+		self.base_repos()
+		self.bg.pos.move_to((self.scene.get_width() - self.bg.pos.length)/2, (self.scene.get_height() - self.bg.pos.height)/2)
+		self.title.pos.move_to(self.bg.pos.x + 10, self.bg.pos.y + 10)
+		self.y_btn.pos.move_to(
+			self.bg.pos.x + self.bg.pos.length - self.y_btn.pos.length - 10,
+			self.bg.pos.y + self.bg.pos.height - self.y_btn.pos.height - 10
+		)
+		self.y_btn.pos.height = 50
+		self.y_btn.pos.length = 150
+		self.y_btn.border_radius = 5
+		self.y_btn.repos()
+
+		self.n_btn.pos.move_to(
+			self.y_btn.pos.x - self.n_btn.pos.length - 10,
+			self.y_btn.pos.y
+		)
+		self.n_btn.pos.height = 50
+		self.n_btn.pos.length = 150
+		self.n_btn.border_radius = 5
+		self.n_btn.repos()
+
+class Toast(Overlay):
+	def __init__(self, scene, HUD):
+		super().__init__(scene, HUD)
+
+
