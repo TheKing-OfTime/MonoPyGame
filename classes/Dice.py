@@ -21,9 +21,14 @@ class GlassDice(Displayable):
         super().__init__(scene)
         self.first_dice = Dice(scene)
         self.second_dice = Dice(scene)
-        self.first_dice.pos.move_to(0, 120)
-        self.second_dice.pos.move_to(60, 120)
+        self.update_pos()
 
     def roll_dices(self):
         result = self.first_dice.roll() + self.second_dice.roll()
         return result
+
+    def update_pos(self):
+        shift = 5
+        w = self.scene.get_width()
+        self.first_dice.pos.move_to(w - shift - self.first_dice.pos.length - 60, 5)
+        self.second_dice.pos.move_to(w - shift - self.second_dice.pos.length, 5)

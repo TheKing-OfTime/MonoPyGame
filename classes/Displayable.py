@@ -2,6 +2,7 @@ import pygame
 import random
 import os
 import sys
+
 from classes.BaseClass import BaseClass
 
 
@@ -10,14 +11,16 @@ class Displayable(BaseClass):
     def __init__(self, scene, show=False):
         super().__init__(scene)
         self.asset = None
+        self.core_asset = None
         self.pos = None
         self._show: bool = False
         self.pos = Position(scene, length=100, height=100)
         self._show = show
         self.animation_state = 'DEFAULT'
+        self.animation_memory = {}
 
     def load_asset(self, asset_path):
-        self.asset = pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_path)
+        self.asset = self.core_asset = pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_path)
 
     # noinspection PyTypeChecker
     def draw(self):
@@ -27,12 +30,23 @@ class Displayable(BaseClass):
             pygame.draw.rect(self.scene, self.pos.color, self.pos.get_rect())
         else:
             self.scene.blit(self.asset, (self.pos.x, self.pos.y))
+    def get_rect(self):
+        return pygame.Rect(self.pos.get_rect())
 
     def show(self):
         self._show = True
 
     def hide(self):
         self._show = False
+
+    def rescale_asset(self, width=None, height=None):
+        if width is not None:
+            self.pos.length = width
+        if height is not None:
+            self.pos.height = height
+
+        self.asset = pygame.transform.smoothscale(self.asset, (self.pos.length, self.pos.height))
+        return self.asset
 
 
 class Position(BaseClass):
@@ -48,7 +62,6 @@ class Position(BaseClass):
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
     def get_rect(self):
-        print(self.x, self.y, self.length, self.height)
         return self.x, self.y, self.length, self.height
 
     def move(self, x, y):
@@ -76,6 +89,8 @@ class Animated(Displayable):
     def load_asset(self, asset_dir_path):
         for asset in os.listdir(asset_dir_path):
             img = pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_dir_path + '\\' + asset)
+            if not asset.endswith('.png'):
+                img = img.convert()
             self.assets.append(img)
             self.pos.length = img.get_width()
             self.pos.height = img.get_height()
@@ -125,14 +140,16 @@ class Animated(Displayable):
 
 class DisplayableText(Displayable):
 
-    def __init__(self, scene, text, color=(255, 255, 255), size=30):
+    def __init__(self, scene, text, color=(255, 255, 255), size=30, pos=(0, 0)):
         super().__init__(scene)
         self.text = text
-        self.font = pygame.font.SysFont('Comic Sans MS', size)
+        self.font = pygame.font.Font(os.path.abspath(sys.argv[0]).replace('main.py', '') + 'fonts/Myriad Pro/MyriadPro-Light.otf', size) #pygame.font.SysFont('Consolas', size)
         self.color = color
         self.surface = self.font.render(self.text, True, self.color)
         self.pos.length = self.pos.default_length = self.surface.get_width()
         self.pos.height = self.pos.default_height = self.surface.get_height()
+        self.pos.x = pos[0]
+        self.pos.y = pos[1]
         self._show = True
 
     def render(self):
