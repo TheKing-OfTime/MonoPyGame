@@ -31,7 +31,7 @@ class HUD(BaseClass):
 		for player in players:
 			self.player_cards.append(PlayerCard(self.scene, i))
 			i+=1
-		self.next_turn_button = Button(self.scene, 'regular_next_turn', text='Следующий ход', gab=(250, 50, 10), text_size=30)
+		self.next_turn_button = Button(self.scene, 'regular_next_turn', text='Бросить кости', gab=(250, 50, 10), text_size=30)
 		self.buttons = [self.next_turn_button]
 		self.repos()
 
@@ -127,9 +127,10 @@ class UIElement(Displayable):
 		self.border_radius = 0
 		self.highlighted = False
 		self.darkened = False
+		self.disabled = False
 
 	def render_highlighted(self):
-		if self.highlighted:
+		if self.highlighted and not self.disabled:
 			pygame.draw.rect(self.scene, (255, 255, 255),
 							 (self.pos.x - 4, self.pos.y - 4, self.pos.length + 8, self.pos.height + 8),
 							 border_radius=self.border_radius + 4)
@@ -139,7 +140,7 @@ class UIElement(Displayable):
 							 border_radius=self.border_radius + 2)
 
 	def render_base(self):
-		color = np.array(self.colour) - (np.array((50, 50, 50)) * int(self.darkened))
+		color = np.array(self.colour) - (np.array((50, 50, 50)) * int(self.darkened)) - (np.array((100, 100, 100)) * int(self.disabled))
 		pygame.draw.rect(self.scene, color, self.pos.get_rect(), border_radius=self.border_radius)
 
 class Button(UIElement):

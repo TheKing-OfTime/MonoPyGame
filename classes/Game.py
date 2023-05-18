@@ -142,15 +142,17 @@ class Game(BaseClass):
                 self.done = True
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE and self.game_state == 'DEFAULT':
-                    self.HUD.next_turn_button.darkened = False
-                    self.next_turn()
+                    if not self.HUD.next_turn_button.disabled:
+                        self.HUD.next_turn_button.darkened = False
+                        self.next_turn()
                 # elif event.key == pygame.K_d:
                 #     if self.cards[0].animation_state == "DEFAULT":
                 #         self.cards[0].animation_state = "IN_DEPOSIT"
                 #         self.cards_in_move.append(self.cards[0])
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and self.game_state == 'DEFAULT':
-                    self.HUD.next_turn_button.darkened = True
+                    if not self.HUD.next_turn_button.disabled:
+                        self.HUD.next_turn_button.darkened = True
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     if self.game_state == "DEFAULT":
@@ -166,6 +168,8 @@ class Game(BaseClass):
 
                     for btn in self.HUD.buttons:
                         btn.darkened = False
+                        if btn.disabled:
+                            continue
                         collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
                         if collide:
                             if self.game_state == "MAIN_MENU":
@@ -189,7 +193,7 @@ class Game(BaseClass):
 
             elif event.type == pygame.MOUSEMOTION:
                 for btn in self.HUD.buttons:
-                    if btn.type.startswith('radio'):
+                    if btn.type.startswith('radio') or btn.disabled:
                         continue
                     collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
                     if collide:
@@ -199,6 +203,8 @@ class Game(BaseClass):
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 for btn in self.HUD.buttons:
+                    if btn.disabled:
+                        continue
                     collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
                     if collide:
                         btn.darkened = True
@@ -215,6 +221,7 @@ class Game(BaseClass):
             self.HUD.next_turn_button.change_text('Двигать фишку')
         elif self.current_turn == self.TURN_STATES[1]:
             target_turn = self.current_turn
+            self.HUD.next_turn_button.disabled = True
             if self.current_player.animation_state == "DEFAULT":
                 self.current_player.animation_state = "START"
                 self.current_player.move_to_tile(self.dice_glass.get_value())
@@ -222,15 +229,19 @@ class Game(BaseClass):
                 target_turn = next_turn
                 self.current_player.animation_state = "DEFAULT"
                 self.HUD.next_turn_button.change_text('Пропустить')
+                self.HUD.next_turn_button.disabled = False
         elif self.current_turn == self.TURN_STATES[2]:
-            self.HUD.next_turn_button.change_text('Передать ход')
+            txt = 'Передать ход'
+            if self.dice_glass.first_dice.value == self.dice_glass.second_dice.value:
+                txt = "Продолжить ход"
+            self.HUD.next_turn_button.change_text(txt)
         elif self.current_turn == self.TURN_STATES[3]:
             target = (self.current_player_id + 1) % len(self.players)
             if self.dice_glass.first_dice.value == self.dice_glass.second_dice.value:
                 target = self.current_player_id
             self.current_player = self.players[target]
             self.current_player_id = target
-            self.HUD.next_turn_button.change_text('Кинуть кубики')
+            self.HUD.next_turn_button.change_text('Бросить кости')
 
         self.current_turn = target_turn
 
