@@ -16,6 +16,7 @@ class HUD(BaseClass):
 
 	def __init__(self, scene):
 		super().__init__(scene)
+		self.current_overlay = None
 		self.state = "DEFAULT"
 		self.player_cards = []
 		self.buttons = []
@@ -23,26 +24,44 @@ class HUD(BaseClass):
 		self.game_title = None
 		self.play_button = None
 		self.next_turn_button = None
+		self.buy_card_button = None
+		self.request_trade_button = None
 		self.pc_2 = None
 		self.pc_3 = None
 		self.pc_4 = None
 
-	def init_default(self, players):
+	def init_default(self, players, game):
 		i = 0
 		for player in players:
 			self.player_cards.append(PlayerCard(self.scene, self, i))
 			i+=1
-		self.next_turn_button = Button(self.scene, self, 'regular_next_turn', text='Бросить кости', gab=(250, 50, 10), text_size=30)
+		self.next_turn_button = Button(self.scene, self, 'regular_next_turn', text='Бросить кости', gab=(250, 50, 10),
+									   text_size=30)
+		self.buy_card_button = Button(self.scene, self, 'regular_buy_card', text='Нельзя купить', gab=(250, 50, 10),
+									   text_size=30)
+		self.request_trade_button = Button(self.scene, self, 'request_trade_turn', text='Предложить обмен', gab=(250, 50, 10),
+									   text_size=30)
 		self.next_turn_button.show()
-		self.buttons = [self.next_turn_button]
+		self.buy_card_button.show()
+		self.buy_card_button.disabled = True
+		self.request_trade_button.show()
+		self.request_trade_button.disabled = True
+		self.buttons = [self.next_turn_button, self.buy_card_button, self.request_trade_button]
 		self.overlays = [
 			Modal(self.scene,
 				  self,
-				  'Test',
-				  y_btn=Button(self.scene, self, 'regular_modal_test_yes', text='Окей!'),
-				  n_btn=Button(self.scene, self, 'regular_modal_test_no', text='Отмена!'))
+				  'Выпало:',
+				  y_btn=Button(self.scene, self, 'regular_modal_dice-notice_got-it', text='Окей')
+				  ),
+			Modal(self.scene,
+				  self,
+				  'Купить карту?',
+				  y_btn=Button(self.scene, self, 'regular_modal_buy_card_yes', text='Да'),
+				  n_btn=Button(self.scene, self, 'regular_modal_buy_card_no', text='Отмена')
+				  )
 		]
-		self.repos()
+		self.current_overlay = self.overlays[0]
+		self.repos(game=game)
 
 	def init_main_menu(self):
 		self.play_button = Button(self.scene, self, 'regular_play', 'assets/BUTT.png', 'Play', (200, 100, 10), text_size=50, icon_size=75)
@@ -110,7 +129,7 @@ class HUD(BaseClass):
 		loading_text.render()
 		pygame.display.flip()
 
-	def repos(self, state="DEFAULT"):
+	def repos(self, state="DEFAULT", game=None):
 		if state == "MAIN_MENU":
 			self.play_button.pos.x = (self.scene.get_width() / 2) - (self.play_button.pos.length / 2)
 			self.play_button.pos.y = (self.scene.get_height() / 2) - (self.play_button.pos.height / 2)
@@ -132,7 +151,22 @@ class HUD(BaseClass):
 
 		elif state == "DEFAULT":
 
-			self.next_turn_button.pos.move_to(5, self.scene.get_height() - self.next_turn_button.pos.height - 5)
+			self.next_turn_button.pos.move_to(
+				5,
+				self.scene.get_height() - self.next_turn_button.pos.height - 5
+			)
+
+			self.request_trade_button.pos.move_to(
+				self.scene.get_width() - self.request_trade_button.pos.length - 5,
+				self.next_turn_button.pos.y
+			)
+
+			if self.request_trade_button.pos.length + 5 + self.buy_card_button.pos.length < self.scene.get_width() - game.bg.pos.x - game.bg.pos.length:
+				self.buy_card_button.pos.move_to(self.request_trade_button.pos.x - self.buy_card_button.pos.length - 10, self.request_trade_button.pos.y)
+			else:
+				self.buy_card_button.pos.move_to(self.request_trade_button.pos.x,
+												 self.request_trade_button.pos.y - self.buy_card_button.pos.height - 10)
+
 			for btn in self.buttons:
 				btn.repos()
 			for overlay in self.overlays:
@@ -310,7 +344,7 @@ class Overlay(UIElement):
 		self.colour = (0, 0, 0)
 		self.alpha = 0
 		self.animation_speed = 8
-		self.target_alpha = 128
+		self.target_alpha = 150
 		self.border_radius = 0
 
 	def appear(self):
@@ -335,6 +369,7 @@ class Overlay(UIElement):
 			if self.alpha <= 0:
 				self.alpha = 0
 				self.animation_state = "DEFAULT"
+				self.hide()
 				for el in self.ui_elements:
 					el.hide()
 
@@ -358,17 +393,17 @@ class Overlay(UIElement):
 		self.surface = pygame.Surface((self.pos.length, self.pos.height))
 
 class Modal(Overlay):
-	def __init__(self, scene, HUD, title, y_btn, description=None, n_btn=None):
+	def __init__(self, scene, HUD, title, y_btn, description=None, n_btn=None, additional_elements=None):
 		super().__init__(scene, HUD)
-		self.bg = UIElement(scene, HUD)
-		self.bg.colour = (50, 50, 50)
-		self.bg.pos.length = 500
-		self.bg.pos.height = 400
-		self.bg.border_radius = 10
+		self.hide()
+		self.bg = ModalBG(scene, HUD)
 		self.title = DisplayableText(scene, title, size=50)
 		self.title.hide()
 
+		self.addons = additional_elements
+
 		self.y_btn = y_btn
+		self.n_btn = n_btn
 		self.y_btn.hide()
 		self.HUD.buttons.append(self.y_btn)
 
@@ -378,8 +413,7 @@ class Modal(Overlay):
 			self.y_btn
 		]
 
-		if n_btn is not None:
-			self.n_btn = n_btn
+		if self.n_btn is not None:
 			self.y_btn.hide()
 			self.ui_elements.append(self.n_btn)
 			self.HUD.buttons.append(self.n_btn)
@@ -396,10 +430,43 @@ class Modal(Overlay):
 				el.handle_animation()
 			if el._show:
 				el.render()
+		if self.addons and self.animation_state == "DEFAULT":
+			for el in self.addons:
+				if el.animation_state != "DEFAULT":
+					el.handle_animation()
+				if el._show:
+					el.render()
+
+	def appear(self):
+		super().appear()
+		self.show()
+
+		#for el in self.ui_elements:
+		el = self.ui_elements[0]
+		el.animation_state = 'APPEARING'
+
+		if self.addons:
+			for el in self.addons:
+				el.show()
+
+	def disappear(self):
+		super().disappear()
+		self.hide()
+		#for el in self.ui_elements:
+		el = self.ui_elements[0]
+		el.animation_state = 'DISAPPEARING'
+
+		if self.addons:
+			for el in self.addons:
+				el.hide()
+
+	def handle_animation(self):
+		super().handle_animation()
+		self.repos()
 
 	def repos(self):
 		self.base_repos()
-		self.bg.pos.move_to((self.scene.get_width() - self.bg.pos.length)/2, (self.scene.get_height() - self.bg.pos.height)/2)
+		self.bg.repos()
 		self.title.pos.move_to(self.bg.pos.x + 10, self.bg.pos.y + 10)
 		self.y_btn.pos.move_to(
 			self.bg.pos.x + self.bg.pos.length - self.y_btn.pos.length - 10,
@@ -410,14 +477,56 @@ class Modal(Overlay):
 		self.y_btn.border_radius = 5
 		self.y_btn.repos()
 
-		self.n_btn.pos.move_to(
-			self.y_btn.pos.x - self.n_btn.pos.length - 10,
-			self.y_btn.pos.y
-		)
-		self.n_btn.pos.height = 50
-		self.n_btn.pos.length = 150
-		self.n_btn.border_radius = 5
-		self.n_btn.repos()
+		if self.n_btn:
+			self.n_btn.pos.move_to(
+				self.y_btn.pos.x - self.n_btn.pos.length - 10,
+				self.y_btn.pos.y
+			)
+			self.n_btn.pos.height = 50
+			self.n_btn.pos.length = 150
+			self.n_btn.border_radius = 5
+			self.n_btn.repos()
+
+		if self.addons:
+			for el in self.addons:
+				el.repos()
+
+
+class ModalBG(UIElement):
+	def __init__(self, scene, HUD):
+		super().__init__(scene, HUD)
+		self.colour = (50, 50, 50)
+		self.target_gap = np.array([500, 400])
+		self.offset_gap = np.array([125, 100])
+		self.animation_speed = 12
+		self.pos.length = self.target_gap[0] + self.offset_gap[0]
+		self.pos.height = self.target_gap[1] + self.offset_gap[1]
+		self.border_radius = 10
+
+	def handle_animation(self):
+		if self.animation_state == "APPEARING":
+			self.show()
+			self.pos.length -= self.offset_gap[0] / self.animation_speed
+			self.pos.height -= self.offset_gap[1] / self.animation_speed
+			if self.pos.length <= self.target_gap[0]:
+				self.pos.length = self.target_gap[0]
+				self.pos.height = self.target_gap[1]
+				self.animation_state = "DEFAULT"
+			self.repos()
+
+		elif self.animation_state == "DISAPPEARING":
+			self.pos.length += self.offset_gap[0] / self.animation_speed
+			self.pos.height += self.offset_gap[1] / self.animation_speed
+			if self.pos.length >= (self.target_gap + self.offset_gap)[0]:
+				self.pos.length = (self.target_gap + self.offset_gap)[0]
+				self.pos.height = (self.target_gap + self.offset_gap)[1]
+				self.animation_state = "DEFAULT"
+				self.hide()
+			self.repos()
+	def repos(self):
+		self.pos.move_to(
+			(self.scene.get_width()  - self.pos.length) / 2,
+			(self.scene.get_height() - self.pos.height) / 2)
 
 class Toast(Overlay):
 	def __init__(self, scene, HUD):

@@ -14,6 +14,8 @@ class Card(Animated):
     def __init__(self, scene, street_data):
         super().__init__(scene)
         self.deposited = False
+        self.owned_by = None
+        self.frame = 1
         self.colour = street_data["colour"]
         self.name = street_data["name"]
         self.price = street_data["price"]
@@ -35,5 +37,35 @@ class Card(Animated):
     def deposit(self):
         self.deposited = not self.deposited
 
+    def repos(self):
+        self.pos.move_to(
+            (self.scene.get_width() - self.pos.length) / 2,
+            (self.scene.get_height() - self.pos.height) / 2
+        )
 
-    #def flip
+    def handle_animations(self, game):
+        if self.animation_state == "IN_DEPOSIT":
+            target = self.pos.length - 20
+            if target <= 0:
+                self.rescale_assets(width=0)
+                self.pos.move((-self.pos.length / 2), 0)
+                self.draw_next()
+                self.animation_state = "OUT_DEPOSIT"
+            else:
+                self.rescale_assets(target)
+                self.pos.move(10, 0)
+
+        elif self.animation_state == "OUT_DEPOSIT":
+            target = self.pos.length + 20
+            if target >= self.pos.default_length:
+                self.rescale_assets(width=self.pos.default_length)
+                self.pos.move(((self.pos.default_length - self.pos.length) / 2), 0)
+                self.animation_state = "DEFAULT"
+                self.deposit()
+                game.cards_in_move.remove(self)
+            else:
+                self.rescale_assets(width=target)
+                self.pos.move(-10, 0)
+
+    def render(self):
+        self.draw()

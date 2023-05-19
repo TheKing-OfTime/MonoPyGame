@@ -23,7 +23,7 @@ class Player(Animated):
         super().__init__(scene)
         self.frame = id % 5
         self.load_asset('assets\\pieces\\playable\\highlighted')
-        self.rescale_assets(32, 32)
+        self.rescale_assets(35, 35)
         self._id = id
         self.name = name
         self.tile = self.curr_tile = 0
@@ -40,6 +40,42 @@ class Player(Animated):
         self.tile += number
         if self.tile > 39:
             self.tile -= 40
+            
+    def handle_animations(self, game):
+        A = 5
+        
+        if self.animation_state == 'MOVE':
+            target_pos = np.array(self.animation_memory['target_pos'])
+            player_pos_g = np.array(self.animation_memory['player_pos'])
+            player_pos = np.array([self.pos.x, self.pos.y])
+            direction = target_pos - player_pos_g
+            direction_x = 0
+            direction_y = 0
+            if direction[0] != 0:
+                direction_x = direction[0]/abs(direction[0])
+            if direction[1] != 0:
+                direction_y = direction[1]/abs(direction[1])
+
+            res = np.array([direction_x * A, direction_y * A]) + player_pos
+            check = (target_pos - res) * np.array([-direction_x, -direction_y])
+            if check[0] > 0 or check[1] > 0:
+                self.animation_state = 'START'
+                res = target_pos
+                game.current_player.curr_tile += 1
+                if game.current_player.curr_tile > 39:
+                    game.current_player.curr_tile -= 40
+                    game.current_player.money += 2000
+            self.pos.move_to(*res)
+
+        if self.animation_state == 'START':
+            if self.curr_tile == self.tile:
+                game.current_player.animation_state = "END"
+                game.next_turn()
+                return
+
+            target_pos = self.get_target_pos()
+            self.animation_memory = {"target_pos":target_pos, "player_pos": np.array([self.pos.x, self.pos.y])}
+            self.animation_state = 'MOVE'
 
     def get_target_pos(self, number=1):
         target = 0
