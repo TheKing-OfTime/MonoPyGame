@@ -42,7 +42,7 @@ class HUD(BaseClass):
 									   text_size=30)
 		self.buy_card_button = Button(self.scene, self, 'regular_buy_card', text='Нельзя купить', gab=(250, 50, 10),
 									   text_size=30)
-		self.request_trade_button = Button(self.scene, self, 'request_trade_turn', text='Предложить обмен', gab=(250, 50, 10),
+		self.request_trade_button = Button(self.scene, self, 'regular_request_trade', text='Предложить обмен', gab=(250, 50, 10),
 									   text_size=30)
 		self.next_turn_button.show()
 		self.buy_card_button.show()
@@ -70,6 +70,18 @@ class HUD(BaseClass):
 				  n_btn=Button(self.scene, self, 'regular_modal_change-name_no', text='Отмена')
 				  )
 		]
+
+		trade_md = Modal(self.scene,
+				  self,
+				  'Настройте обмен:',
+				  y_btn=Button(self.scene, self, 'regular_modal_trade_yes', text='Готово'),
+				  n_btn=Button(self.scene, self, 'regular_modal_trade_no', text='Отмена')
+				  )
+
+		trade_md.bg.change_target_gap(np.array([625, 500]))
+
+		self.overlays.append(trade_md)
+
 		self.current_overlay = self.overlays[0]
 		self.repos(game=game)
 
@@ -245,6 +257,7 @@ class UIElement(Displayable):
 		self.highlighted = False
 		self.darkened = False
 		self.disabled = False
+		self.disabled_color = (100, 100, 100)
 
 	def render_highlighted(self):
 		if self.highlighted and not self.disabled and self.highlight_type == 1:
@@ -259,7 +272,7 @@ class UIElement(Displayable):
 	def render_base(self):
 		color = np.array(self.colour) \
 				- (np.array((50, 50, 50)) * int(self.darkened)) \
-				- (np.array((100, 100, 100)) * int(self.disabled))
+				- (np.array(self.disabled_color) * int(self.disabled))
 		if self.highlight_type == 2:
 			color += ((np.array((25, 25, 25))) * int(self.highlighted))
 		pygame.draw.rect(self.scene, color, self.pos.get_rect(), border_radius=self.border_radius)
@@ -276,7 +289,7 @@ class UIElement(Displayable):
 class Button(UIElement):
 
 	def __init__(self, scene, HUD, type, asset_path=None, text=None, gab=(200, 100, 20), text_size=40, icon_size=50,
-				 highlight_type=1, colour=(204, 227, 198), text_colour=(0, 0, 0), custom_id=None, disabled=False):
+				 highlight_type=1, colour=(204, 227, 198), text_colour=(0, 0, 0), custom_id=None, disabled=False, disabled_color=(100, 100, 100)):
 
 		super().__init__(scene, HUD)
 		self.type = type
@@ -284,6 +297,7 @@ class Button(UIElement):
 		self.disabled = disabled
 		self.colour = colour
 		self.highlight_type = highlight_type
+		self.disabled_color = disabled_color
 
 		if not asset_path and not text:
 			text = 'Test'
@@ -394,6 +408,11 @@ class PlayerCard(UIElement):
 
 		self.highlighted = (curr_pl == player)
 		self.render_highlighted()
+
+		if player.bankrupt:
+			self.colour = (100, 100, 100)
+		else:
+			self.colour = (204, 227, 198)
 
 		self.render_base()
 
@@ -601,6 +620,12 @@ class ModalBG(UIElement):
 				self.animation_state = "DEFAULT"
 				self.hide()
 			self.repos()
+
+	def change_target_gap(self, gap=np.array([500, 400])):
+		self.target_gap = gap
+		self.pos.length = self.target_gap[0] + self.offset_gap[0]
+		self.pos.height = self.target_gap[1] + self.offset_gap[1]
+
 	def repos(self):
 		self.pos.move_to(
 			(self.scene.get_width()  - self.pos.length) / 2,
@@ -683,3 +708,18 @@ class ContextMenu(Overlay):
 		if self._show:
 			for el in self.ui_elements:
 				el.render()
+
+
+class UIElementsContainer(UIElement):
+	def __init__(self, scene, HUD, l, h, t='vertical', el_alignment='center', ui_elements=None, el_offset=None):
+		super().__init__(scene, HUD)
+		if ui_elements is None:
+			ui_elements = []
+		self.pos.height = h
+		self.pos.length = l
+		self.type = t
+		self.ui_elements = ui_elements
+		self.el_offset = el_offset
+
+
+

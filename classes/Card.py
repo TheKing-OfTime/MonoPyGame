@@ -16,6 +16,7 @@ class Card(Animated):
         self.deposited = False
         self.owned_by = None
         self.frame = 1
+        self.buildings = 0
         self.colour = street_data["colour"]
         self.name = street_data["name"]
         self.price = street_data["price"]
@@ -71,3 +72,17 @@ class Card(Animated):
 
     def render(self):
         self.draw()
+
+    def get_rent_price(self):
+        if self.buildings == 0:
+            return self.rent_price
+        elif self.buildings == 1:
+            return self.one_house_rent_price
+        elif self.buildings == 2:
+            return self.two_house_rent_price
+        elif self.buildings == 3:
+            return self.three_house_rent_price
+        elif self.buildings == 4:
+            return self.four_house_rent_price
+        elif self.buildings == 5:
+            return self.hostel_rent_price
