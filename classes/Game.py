@@ -19,6 +19,13 @@ class Game(BaseClass):
         "CONNECTING"
     ]
 
+    TURN_STATES = [
+        'ROLL',
+        'MOVE',
+        'OPTIONAL_ACTIONS',
+        'NEXT_PLAYER'
+    ]
+
     def __init__(self, scene, player_count=4):
         super().__init__(scene)
         start_time = time.time()
@@ -36,16 +43,17 @@ class Game(BaseClass):
         self.cards_in_move = []
         self.players = []
         self.current_player = None
+        self.current_turn = self.TURN_STATES[0]
         self.current_player_id = 0
 
-        self.HUD.init_main_menu_buttons()
+        self.HUD.init_main_menu()
 
         self.game_state = "MAIN_MENU"
         print("loaded in: ", round((time.time() - start_time) * 1000), 'ms', sep='')
 
     def run_loop(self):
         while not self.done:
-
+            frame_time = time.time()
             self.handle_events()
 
             if self.game_state == 'DEFAULT':
@@ -56,12 +64,12 @@ class Game(BaseClass):
 
                 self.handle_players()
 
-                self.handle_dices()
+                #self.handle_dices()
 
             self.handle_HUD()
 
             pygame.display.flip()
-            pygame.time.wait(10)
+            pygame.time.wait(max(10 - round((time.time() - frame_time) * 1000), 0))
             self.scene.fill(color=[50, 50, 50])
 
     def load_cards(self):
@@ -73,19 +81,20 @@ class Game(BaseClass):
             if not tile['data']['assets_path']:
                 print(tile['name'] + ' assets_path not found. Skipping!')
                 continue
-
-            self.cards.append(self.create_street(tile['data']))
+            card = self.create_street(tile['data'])
+            card.set_id(tile['id'])
+            self.cards.append(card)
 
     def load_players(self):
         for i in range(self.p_count):
             p = self.load_player(i)
             p.pos.move(*self.p_pos_shifted)
             self.players.append(p)
-        self.HUD.init_p_cards(self.players)
+        self.HUD.init_default(self.players, self)
         self.current_player = self.players[0]
 
     def load_player(self, id):
-        return Player(self.scene, id, "TheKingOfTime" + str(id))
+        return Player(self.scene, id, "Player" + str(id))
 
     def create_street(self, street_data) -> Card:
         return Card(self.scene, street_data)
@@ -104,29 +113,7 @@ class Game(BaseClass):
 
     def handle_cards_animation(self):
         for card in self.cards_in_move:
-
-            if card.animation_state == "IN_DEPOSIT":
-                target = card.pos.length - 20
-                if target <= 0:
-                    card.rescale_assets(width=0)
-                    card.pos.move((-card.pos.length / 2), 0)
-                    card.draw_next()
-                    card.animation_state = "OUT_DEPOSIT"
-                else:
-                    card.rescale_assets(target)
-                    card.pos.move(10, 0)
-
-            elif card.animation_state == "OUT_DEPOSIT":
-                target = card.pos.length + 20
-                if target >= card.pos.default_length:
-                    card.rescale_assets(width=card.pos.default_length)
-                    card.pos.move(((card.pos.default_length - card.pos.length) / 2), 0)
-                    card.animation_state = "DEFAULT"
-                    card.deposit()
-                    self.cards_in_move.remove(card)
-                else:
-                    card.rescale_assets(width=target)
-                    card.pos.move(-10, 0)
+            card.handle_animations(self)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -134,14 +121,17 @@ class Game(BaseClass):
                 self.done = True
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE and self.game_state == 'DEFAULT':
-                    if self.current_player.animation_state == "DEFAULT":
-                        self.current_player.animation_state = "START"
-                        res = self.dice_glass.roll_dices()
-                        self.current_player.move_to_tile(res)
-                elif event.key == pygame.K_d:
-                    if self.cards[0].animation_state == "DEFAULT":
-                        self.cards[0].animation_state = "IN_DEPOSIT"
-                        self.cards_in_move.append(self.cards[0])
+                    if not self.HUD.next_turn_button.disabled:
+                        self.HUD.next_turn_button.darkened = False
+                        self.next_turn()
+                # elif event.key == pygame.K_d:
+                #     if self.cards[0].animation_state == "DEFAULT":
+                #         self.cards[0].animation_state = "IN_DEPOSIT"
+                #         self.cards_in_move.append(self.cards[0])
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and self.game_state == 'DEFAULT':
+                    if not self.HUD.next_turn_button.disabled:
+                        self.HUD.next_turn_button.darkened = True
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     if self.game_state == "DEFAULT":
@@ -154,12 +144,18 @@ class Game(BaseClass):
                                     card.animation_state = "IN_DEPOSIT"
                                     self.cards_in_move.append(card)
                                 break
-                    elif self.game_state == "MAIN_MENU":
-                        for btn in self.HUD.buttons:
-                            btn.darkened = False
-                            collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
-                            if collide:
-                                if btn.type == 'play':
+
+                    for btn in self.HUD.buttons:
+                        btn.darkened = False
+                        if btn.disabled:
+                            continue
+                        if self.HUD.current_overlay:
+                            if (self.HUD.current_overlay._show) and not ('modal' in btn.type) or not self.HUD.current_overlay._show and ('modal' in btn.type):
+                                continue
+                        collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
+                        if collide:
+                            if self.game_state == "MAIN_MENU":
+                                if btn.type == 'regular_play':
                                     self.game_state = "LOADING"
                                     self.HUD.show_loading()
                                     self.init_game()
@@ -172,15 +168,49 @@ class Game(BaseClass):
                                             continue
                                         rbtn.highlighted = False
 
+                            elif self.game_state == 'DEFAULT':
+                                if btn.type == 'regular_next_turn':
+                                    self.next_turn()
+                                elif btn.type == 'regular_buy_card':
+                                    self.HUD.current_overlay = self.HUD.overlays[1]
+                                    card = self.get_card_by_tile(self.current_player.tile)
+                                    self.HUD.current_overlay.addons = [card]
+                                    self.HUD.current_overlay.title.change_text(
+                                        self.HUD.current_overlay.title.text + ' ' + str(card.price) + '$'
+                                    )
+                                    self.HUD.current_overlay.appear()
+                                elif btn.type.startswith('regular_modal'):
+                                    if btn.type == "regular_modal_buy_card_yes":
+                                        card = self.get_card_by_tile(self.current_player.tile)
+                                        card.owned_by = self.current_player
+                                        self.current_player.owned.append(card)
+                                        self.current_player.money -= card.price
+                                        self.HUD.buy_card_button.change_text('Куплена')
+                                        self.HUD.buy_card_button.disabled = True
+                                    self.HUD.current_overlay.disappear()
+
+
             elif event.type == pygame.MOUSEMOTION:
-                collide = self.HUD.play_button.get_rect().collidepoint(pygame.mouse.get_pos())
-                if collide:
-                    self.HUD.play_button.highlighted = True
-                else:
-                    self.HUD.play_button.highlighted = False
+                for btn in self.HUD.buttons:
+                    if btn.type.startswith('radio') or btn.disabled:
+                        continue
+                    if self.HUD.current_overlay:
+                        if self.HUD.current_overlay._show and not ('modal' in btn.type) or not self.HUD.current_overlay._show and ('modal' in btn.type):
+                            continue
+                    collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
+                    if collide:
+                        btn.highlighted = True
+                        break
+                    else:
+                        btn.highlighted = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 for btn in self.HUD.buttons:
+                    if btn.disabled:
+                        continue
+                    if self.HUD.current_overlay:
+                        if self.HUD.current_overlay._show and not ('modal' in btn.type) or not self.HUD.current_overlay._show and ('modal' in btn.type):
+                            continue
                     collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
                     if collide:
                         btn.darkened = True
@@ -188,6 +218,64 @@ class Game(BaseClass):
             elif event.type == pygame.WINDOWRESIZED:
                 self.handle_window_resize()
 
+    def next_turn(self):
+        next_turn = self.TURN_STATES[(self.TURN_STATES.index(self.current_turn) + 1) % len(self.TURN_STATES)]
+        target_turn = next_turn
+
+
+        if self.current_turn == self.TURN_STATES[0]:
+            self.HUD.current_overlay = self.HUD.overlays[0]
+            self.HUD.current_overlay.addons = [self.dice_glass]
+            self.dice_glass.roll_dices()
+            self.HUD.current_overlay.appear()
+            self.HUD.next_turn_button.change_text('Двигать фишку')
+
+
+        elif self.current_turn == self.TURN_STATES[1]:
+            self.HUD.current_overlay.disappear()
+            target_turn = self.current_turn
+            self.HUD.next_turn_button.disabled = True
+            if self.current_player.animation_state == "DEFAULT":
+                self.current_player.animation_state = "START"
+                self.current_player.move_to_tile(self.dice_glass.get_value())
+            elif self.current_player.animation_state == "END":
+                target_turn = next_turn
+                self.current_player.animation_state = "DEFAULT"
+                self.HUD.next_turn_button.change_text('Пропустить')
+                self.HUD.next_turn_button.disabled = False
+                self.HUD.request_trade_button.disabled = False
+                card = self.get_card_by_tile(self.current_player.tile)
+                self.HUD.buy_card_button.disabled = True
+                if card is None:
+                    self.HUD.buy_card_button.change_text('Нельзя купить')
+                elif card.owned_by == self.current_player:
+                    self.HUD.buy_card_button.change_text('Куплена')
+                elif card.owned_by != self.current_player and card.owned_by is not None:
+                    self.HUD.buy_card_button.change_text('Чужая карта')
+                elif self.current_player.money - card.price < 0:
+                    self.HUD.buy_card_button.change_text('Слишком дорого')
+                else:
+                    self.HUD.buy_card_button.disabled = False
+                    self.HUD.buy_card_button.change_text('Купить карту')
+
+        elif self.current_turn == self.TURN_STATES[2]:
+            self.HUD.request_trade_button.disabled = True
+            self.HUD.buy_card_button.disabled = True
+            txt = 'Передать ход'
+            if self.dice_glass.first_dice.value == self.dice_glass.second_dice.value:
+                txt = "Продолжить ход"
+            self.HUD.next_turn_button.change_text(txt)
+
+
+        elif self.current_turn == self.TURN_STATES[3]:
+            target = (self.current_player_id + 1) % len(self.players)
+            if self.dice_glass.first_dice.value == self.dice_glass.second_dice.value:
+                target = self.current_player_id
+            self.current_player = self.players[target]
+            self.current_player_id = target
+            self.HUD.next_turn_button.change_text('Бросить кости')
+
+        self.current_turn = target_turn
 
     def handle_players(self):
         for player in self.players:
@@ -198,43 +286,8 @@ class Game(BaseClass):
         player.draw()
 
     def handle_player_animation(self):
-        A = 5
-        player = self.current_player
+        self.current_player.handle_animations(self)
 
-        if player.animation_state == 'MOVE':
-            target_pos = np.array(player.animation_memory['target_pos'])
-            player_pos_g = np.array(player.animation_memory['player_pos'])
-            player_pos = np.array([player.pos.x, player.pos.y])
-            direction = target_pos - player_pos_g
-            direction_x = 0
-            direction_y = 0
-            if direction[0] != 0:
-                direction_x = direction[0]/abs(direction[0])
-            if direction[1] != 0:
-                direction_y = direction[1]/abs(direction[1])
-
-            res = np.array([direction_x * A, direction_y * A]) + player_pos
-            check = (target_pos - res) * np.array([-direction_x, -direction_y])
-            if check[0] > 0 or check[1] > 0:
-                player.animation_state = 'START'
-                res = target_pos
-                self.current_player.curr_tile += 1
-                if self.current_player.curr_tile > 39:
-                    self.current_player.curr_tile -= 40
-                    self.current_player.money += 2000
-            player.pos.move_to(*res)
-
-        if player.animation_state == 'START':
-            if player.curr_tile == player.tile:
-                self.current_player.animation_state = "DEFAULT"
-                target = (self.current_player_id + 1) % len(self.players)
-                self.current_player = self.players[target]
-                self.current_player_id = target
-                return
-
-            target_pos = player.get_target_pos()
-            player.animation_memory = {"target_pos":target_pos, "player_pos": np.array([player.pos.x, player.pos.y])}
-            player.animation_state = 'MOVE'
 
     def handle_HUD(self):
         self.HUD.render(self.game_state, self.current_player, self.players)
@@ -243,10 +296,16 @@ class Game(BaseClass):
         self.dice_glass.first_dice.draw()
         self.dice_glass.second_dice.draw()
 
+    def get_card_by_tile(self, tile):
+        for card in self.cards:
+            if card.get_id() == tile:
+                return card
+        return None
+
     def handle_window_resize(self):
         self.p_pos_shifted = np.array(self.bg.update_pos())
         for player in self.players:
             player.pos.move(*self.p_pos_shifted)
 
-        self.dice_glass.update_pos()
-        self.HUD.repos(self.game_state)
+        self.dice_glass.repos()
+        self.HUD.repos(self.game_state, self)

@@ -84,7 +84,7 @@
       "data": {}
     },
     {
-      "id": 8,
+      "id": 9,
       "type": "street",
       "data": {
         "colour": "cyan",
@@ -102,7 +102,7 @@
       }
     },
     {
-      "id": 9,
+      "id": 8,
       "type": "street",
       "data": {
         "colour": "cyan",

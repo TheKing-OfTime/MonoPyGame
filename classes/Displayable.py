@@ -20,7 +20,10 @@ class Displayable(BaseClass):
         self.animation_memory = {}
 
     def load_asset(self, asset_path):
-        self.asset = self.core_asset = pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_path)
+        img = pygame.image.load(os.path.abspath(sys.argv[0]).replace('main.py', '') + asset_path)
+        self.asset = self.core_asset = img
+        self.pos.length = img.get_width()
+        self.pos.height = img.get_height()
 
     # noinspection PyTypeChecker
     def draw(self):
@@ -45,7 +48,18 @@ class Displayable(BaseClass):
         if height is not None:
             self.pos.height = height
 
-        self.asset = pygame.transform.smoothscale(self.asset, (self.pos.length, self.pos.height))
+        self.asset = pygame.transform.smoothscale(self.core_asset, (self.pos.length, self.pos.height))
+        return self.asset
+
+    def rescale_asset_by(self, factor):
+        if isinstance(factor, tuple):
+            factor_l = factor[0]
+            factor_h = factor[1]
+        else:
+            factor_l = factor_h = factor
+        self.pos.length = self.pos.length * factor_l
+        self.pos.height = self.pos.height * factor_h
+        self.asset = pygame.transform.smoothscale_by(self.core_asset, factor)
         return self.asset
 
 
