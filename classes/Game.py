@@ -6,8 +6,9 @@ from classes.BaseClass import BaseClass
 from classes.Player import Player
 from classes.GameBackgroud import GameBackground
 from classes.Card import Card
-from classes.HUD import HUD
+from classes.HUD import HUD, Button
 from classes.Dice import GlassDice
+from classes.Displayable import DisplayableText
 
 
 class Game(BaseClass):
@@ -60,7 +61,7 @@ class Game(BaseClass):
 
                 self.bg.draw()
 
-                #self.handle_cards()
+                self.handle_cards_animation()
 
                 self.handle_players()
 
@@ -90,14 +91,14 @@ class Game(BaseClass):
             p = self.load_player(i)
             p.pos.move(*self.p_pos_shifted)
             self.players.append(p)
-        self.HUD.init_default(self.players, self)
         self.current_player = self.players[0]
+        self.HUD.init_default(self.players, self)
 
     def load_player(self, id):
         return Player(self.scene, id, "Player" + str(id))
 
     def create_street(self, street_data) -> Card:
-        return Card(self.scene, street_data)
+        return Card(self.scene, street_data, self)
 
     def init_game(self):
         self.load_cards()
@@ -108,26 +109,40 @@ class Game(BaseClass):
         for card in self.cards:
             card.draw()
 
-            if not card._show:
-                card.show()
-
     def handle_cards_animation(self):
         for card in self.cards_in_move:
-            card.handle_animations(self)
+            card.handle_animation()
 
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.done = True
             elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_SPACE and self.game_state == 'DEFAULT':
-                    if not self.HUD.next_turn_button.disabled:
-                        self.HUD.next_turn_button.darkened = False
-                        self.next_turn()
-                # elif event.key == pygame.K_d:
-                #     if self.cards[0].animation_state == "DEFAULT":
-                #         self.cards[0].animation_state = "IN_DEPOSIT"
-                #         self.cards_in_move.append(self.cards[0])
+
+                if self.HUD.text_input:
+                    if event.key == pygame.K_BACKSPACE:
+                        if len(self.HUD.current_overlay.addons[0].text) > 0:
+                            self.HUD.current_overlay.addons[0].change_text(self.HUD.current_overlay.addons[0].text[:-1])
+                            self.HUD.current_overlay.addons[0].repos()
+                    else:
+                        if len(self.HUD.current_overlay.addons[0].text) < 16:
+                            self.HUD.current_overlay.addons[0].change_text(self.HUD.current_overlay.addons[0].text + event.unicode)
+                            self.HUD.current_overlay.addons[0].repos()
+
+                    if len(self.HUD.current_overlay.addons[0].text) == 0:
+                        self.HUD.current_overlay.y_btn.disabled = True
+                    else:
+                        self.HUD.current_overlay.y_btn.disabled = False
+                    self.HUD.current_overlay.y_btn.custom_id \
+                        = self.HUD.current_overlay.y_btn.custom_id.split('|')[0] \
+                          + '|' \
+                          + self.HUD.current_overlay.addons[0].text
+
+                else:
+                    if event.key == pygame.K_SPACE and self.game_state == 'DEFAULT':
+                        if not self.HUD.next_turn_button.disabled:
+                            self.HUD.next_turn_button.darkened = False
+                            self.next_turn()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and self.game_state == 'DEFAULT':
                     if not self.HUD.next_turn_button.disabled:
@@ -135,17 +150,13 @@ class Game(BaseClass):
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     if self.game_state == "DEFAULT":
-                        for card in reversed(self.cards):
-                            if not card._show:
-                                continue
-                            collide = card.get_rect().collidepoint(pygame.mouse.get_pos())
-                            if collide:
-                                if card.animation_state == "DEFAULT":
-                                    card.animation_state = "IN_DEPOSIT"
-                                    self.cards_in_move.append(card)
-                                break
-
-                    for btn in self.HUD.buttons:
+                        if self.HUD.context_menu._show:
+                            self.HUD.context_menu.disappear()
+                    els = self.HUD.buttons
+                    if self.HUD.context_menu:
+                        if self.HUD.context_menu._show:
+                            els = self.HUD.context_menu.ui_elements
+                    for btn in els:
                         btn.darkened = False
                         if btn.disabled:
                             continue
@@ -171,12 +182,34 @@ class Game(BaseClass):
                             elif self.game_state == 'DEFAULT':
                                 if btn.type == 'regular_next_turn':
                                     self.next_turn()
+
+                                elif btn.type == 'regular_ctx-menu_deposit':
+                                    card = self.get_card_by_tile(btn.custom_id)
+                                    if card.animation_state == "DEFAULT":
+                                        card.animation_state = "IN_DEPOSIT"
+                                        self.cards_in_move.append(card)
+
+                                elif btn.type == 'regular_ctx-menu_change-name':
+                                    self.HUD.current_overlay = self.HUD.overlays[2]
+                                    self.HUD.text_input = True
+                                    name = self.players[btn.custom_id].name
+                                    self.HUD.current_overlay.addons = [DisplayableText(self.scene, text=name, size=50)]
+                                    self.HUD.current_overlay.y_btn.custom_id = str(btn.custom_id) + '|' + self.players[btn.custom_id].name
+                                    self.HUD.current_overlay.appear()
+
+                                elif btn.type == 'regular_modal_change-name_yes':
+                                    self.HUD.text_input = False
+                                    self.HUD.current_overlay.disappear()
+                                    data = btn.custom_id.split('|')
+                                    print(data[1])
+                                    self.players[int(data[0])].name = data[1]
+
                                 elif btn.type == 'regular_buy_card':
                                     self.HUD.current_overlay = self.HUD.overlays[1]
                                     card = self.get_card_by_tile(self.current_player.tile)
                                     self.HUD.current_overlay.addons = [card]
                                     self.HUD.current_overlay.title.change_text(
-                                        self.HUD.current_overlay.title.text + ' ' + str(card.price) + '$'
+                                        self.HUD.current_overlay.title_text + ' ' + str(card.price) + '$'
                                     )
                                     self.HUD.current_overlay.appear()
                                 elif btn.type.startswith('regular_modal'):
@@ -189,9 +222,85 @@ class Game(BaseClass):
                                         self.HUD.buy_card_button.disabled = True
                                     self.HUD.current_overlay.disappear()
 
+                elif event.button == 3:
+                    if self.game_state == 'DEFAULT':
+                        collide = None
+                        for plcrds in self.HUD.player_cards:
+                            collide = plcrds.get_rect().collidepoint(pygame.mouse.get_pos())
+                            if collide:
+                                self.HUD.context_menu.pos.move_to(*pygame.mouse.get_pos())
+                                self.HUD.context_menu.alpha = 0
+                                self.HUD.context_menu.hide()
+                                self.HUD.context_menu.change_ui_elements([
+                                    Button(
+                                        self.scene,
+                                        self.HUD,
+                                        'regular_ctx-menu_change-name',
+                                        text='Изменить имя',
+                                        gab=(200, 50, 10),
+                                        text_size=30,
+                                        highlight_type=2,
+                                        text_colour=(255, 255, 255),
+                                        custom_id=plcrds.pid
+                                    )
+                                ])
+                                self.HUD.context_menu.appear()
+                                break
+                        if not collide:
+                            for card in self.current_player.owned:
+                                if not card._show:
+                                    continue
+                                collide = card.get_rect().collidepoint(pygame.mouse.get_pos())
+                                if collide:
+                                    self.HUD.context_menu.pos.move_to(*pygame.mouse.get_pos())
+                                    self.HUD.context_menu.alpha = 0
+                                    self.HUD.context_menu.hide()
+                                    self.HUD.context_menu.change_ui_elements([
+                                        Button(
+                                            self.scene,
+                                            self.HUD,
+                                            'regular_ctx-menu_deposit',
+                                            text=('Выкупить' if card.deposited else 'Заложить'),
+                                            gab=(200, 50, 10),
+                                            text_size=30,
+                                            highlight_type=2,
+                                            text_colour=(255, 255, 255),
+                                            custom_id=card._id,
+                                            disabled=((card.owned_by.money - card.price * 0.6) < 0 and card.deposited)
+                                        ),
+                                        Button(
+                                            self.scene,
+                                            self.HUD,
+                                            'regular_ctx-menu_build',
+                                            text='Построить 1-й дом',
+                                            gab=(250, 50, 10),
+                                            text_size=30,
+                                            highlight_type=2,
+                                            text_colour=(255, 255, 255),
+                                            custom_id=card._id
+                                        )
+                                    ])
+                                    if self.HUD.context_menu.pos.x + self.HUD.context_menu.pos.length > self.scene.get_width() - 5:
+                                        self.HUD.context_menu.pos.move(
+                                            -(self.HUD.context_menu.pos.x + self.HUD.context_menu.pos.length - self.scene.get_width() + 5),
+                                            0
+                                        )
+                                    if self.HUD.context_menu.pos.y + self.HUD.context_menu.pos.height > self.scene.get_height() - 5:
+                                        self.HUD.context_menu.pos.move(
+                                            0,
+                                            -(self.HUD.context_menu.pos.y + self.HUD.context_menu.pos.height - self.scene.get_height() + 5)
+                                        )
+                                    self.HUD.context_menu.repos()
+                                    self.HUD.context_menu.appear()
+                                    break
+
 
             elif event.type == pygame.MOUSEMOTION:
-                for btn in self.HUD.buttons:
+                els = self.HUD.buttons
+                if self.HUD.context_menu:
+                    if self.HUD.context_menu._show:
+                        els = self.HUD.context_menu.ui_elements
+                for btn in els:
                     if btn.type.startswith('radio') or btn.disabled:
                         continue
                     if self.HUD.current_overlay:
@@ -205,15 +314,20 @@ class Game(BaseClass):
                         btn.highlighted = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                for btn in self.HUD.buttons:
-                    if btn.disabled:
-                        continue
-                    if self.HUD.current_overlay:
-                        if self.HUD.current_overlay._show and not ('modal' in btn.type) or not self.HUD.current_overlay._show and ('modal' in btn.type):
+                if event.button == 1:
+                    els = self.HUD.buttons
+                    if self.HUD.context_menu:
+                        if self.HUD.context_menu._show:
+                            els = self.HUD.context_menu.ui_elements
+                    for btn in els:
+                        if btn.disabled:
                             continue
-                    collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
-                    if collide:
-                        btn.darkened = True
+                        if self.HUD.current_overlay:
+                            if self.HUD.current_overlay._show and not ('modal' in btn.type) or not self.HUD.current_overlay._show and ('modal' in btn.type):
+                                continue
+                        collide = btn.get_rect().collidepoint(pygame.mouse.get_pos())
+                        if collide:
+                            btn.darkened = True
 
             elif event.type == pygame.WINDOWRESIZED:
                 self.handle_window_resize()
@@ -290,7 +404,7 @@ class Game(BaseClass):
 
 
     def handle_HUD(self):
-        self.HUD.render(self.game_state, self.current_player, self.players)
+        self.HUD.render(self, self.game_state, self.current_player, self.players)
 
     def handle_dices(self):
         self.dice_glass.first_dice.draw()

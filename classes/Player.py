@@ -28,7 +28,7 @@ class Player(Animated):
         self.name = name
         self.tile = self.curr_tile = 0
         self.memory = {}
-        self.money = 1500
+        self.money = 15000
         self.owned = []
         self.chance_cards = []
         self.comm_ch_cards = []

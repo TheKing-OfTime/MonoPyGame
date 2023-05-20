@@ -21,11 +21,14 @@ class HUD(BaseClass):
 		self.player_cards = []
 		self.buttons = []
 		self.overlays = []
+		self.text_input = False
 		self.game_title = None
+		self.available_card_width = None
 		self.play_button = None
 		self.next_turn_button = None
 		self.buy_card_button = None
 		self.request_trade_button = None
+		self.context_menu = None
 		self.pc_2 = None
 		self.pc_3 = None
 		self.pc_4 = None
@@ -46,6 +49,7 @@ class HUD(BaseClass):
 		self.buy_card_button.disabled = True
 		self.request_trade_button.show()
 		self.request_trade_button.disabled = True
+		self.context_menu = ContextMenu(self.scene, self)
 		self.buttons = [self.next_turn_button, self.buy_card_button, self.request_trade_button]
 		self.overlays = [
 			Modal(self.scene,
@@ -58,6 +62,12 @@ class HUD(BaseClass):
 				  'Купить карту?',
 				  y_btn=Button(self.scene, self, 'regular_modal_buy_card_yes', text='Да'),
 				  n_btn=Button(self.scene, self, 'regular_modal_buy_card_no', text='Отмена')
+				  ),
+			Modal(self.scene,
+				  self,
+				  'Введите имя:',
+				  y_btn=Button(self.scene, self, 'regular_modal_change-name_yes', text='Готово'),
+				  n_btn=Button(self.scene, self, 'regular_modal_change-name_no', text='Отмена')
 				  )
 		]
 		self.current_overlay = self.overlays[0]
@@ -67,13 +77,13 @@ class HUD(BaseClass):
 		self.play_button = Button(self.scene, self, 'regular_play', 'assets/BUTT.png', 'Play', (200, 100, 10), text_size=50, icon_size=75)
 		self.play_button.show()
 
-		self.pc_2 = Button(self.scene, self, 'radio_pc_2', 'assets/pieces/dices/Dices_2.png', gab=(60, 60, 10))
+		self.pc_2 = Button(self.scene, self, 'radio_pc_2', 'assets/free-icon-user-6557800_2.png', gab=(60, 60, 10))
 		self.pc_2.show()
 
-		self.pc_3 = Button(self.scene, self, 'radio_pc_3', 'assets/pieces/dices/Dices_3.png', gab=(60, 60, 10))
+		self.pc_3 = Button(self.scene, self, 'radio_pc_3', 'assets/free-icon-user-6557800_3.png', gab=(60, 60, 10))
 		self.pc_3.show()
 
-		self.pc_4 = Button(self.scene, self, 'radio_pc_4', 'assets/pieces/dices/Dices_4.png', gab=(60, 60, 10))
+		self.pc_4 = Button(self.scene, self, 'radio_pc_4', 'assets/free-icon-user-6557800_4_2.png', gab=(60, 60, 10))
 		self.pc_4.show()
 		self.pc_4.highlighted = True
 
@@ -90,12 +100,15 @@ class HUD(BaseClass):
 		self.buttons.append(self.pc_4)
 
 
-	def render(self, state="DEFAULT", player=None, players=None):
+	def render(self, game, state="DEFAULT", player=None, players=None):
 
 		if state == "DEFAULT":
 			self.render_player_cards(player, players)
 			self.render_buttons()
+			self.render_current_player_cards(game)
+			self.context_menu.render()
 			self.render_overlays()
+
 
 
 		elif state == "LOADING":
@@ -117,6 +130,46 @@ class HUD(BaseClass):
 	def render_overlays(self):
 		for overlay in self.overlays:
 			overlay.render()
+
+	def render_current_player_cards(self, game, player = None):
+		if player is None:
+			player = game.current_player
+		i = j = 0
+		r_edge = game.bg.pos.x + game.bg.pos.length + 5
+		for card in player.owned:
+			im = (self.available_card_width - 5) // (card.pos.length + 5)
+
+			if i >= im:
+				i = 0
+				j += 1
+			if card.animation_state == "DEFAULT":
+				card.pos.move_to(
+					r_edge + (card.pos.length + 5) * i,
+					game.bg.pos.y + (card.pos.height + 5) * j
+
+				)
+			card.show()
+			card.draw()
+			i += 1
+
+	# def repos_current_player_cards(self, game, player = None):
+	# 	if player is None:
+	# 		player = game.current_player
+	# 	i = j = 0
+	# 	r_edge = game.bg.pos.x + game.bg.pos.length + 5
+	# 	for card in player.owned:
+	# 		im = (self.available_card_width - 5) // (card.pos.length + 5)
+	# 		card.pos.move_to(
+	# 			r_edge + (card.pos.length + 5) * i,
+	# 			game.bg.pos.y + (card.pos.height + 5) * j
+	#
+	# 		)
+	# 		if i > im:
+	# 			i = 0
+	# 			j += 1
+	# 			continue
+	# 		i += 1
+
 
 	def show_loading(self):
 		self.scene.fill(color=[50, 50, 50])
@@ -160,15 +213,23 @@ class HUD(BaseClass):
 				self.scene.get_width() - self.request_trade_button.pos.length - 5,
 				self.next_turn_button.pos.y
 			)
-
-			if self.request_trade_button.pos.length + 5 + self.buy_card_button.pos.length < self.scene.get_width() - game.bg.pos.x - game.bg.pos.length:
-				self.buy_card_button.pos.move_to(self.request_trade_button.pos.x - self.buy_card_button.pos.length - 10, self.request_trade_button.pos.y)
+			self.available_card_width = self.scene.get_width() - game.bg.pos.x - game.bg.pos.length
+			if self.request_trade_button.pos.length + 5 + self.buy_card_button.pos.length < self.available_card_width:
+				self.buy_card_button.pos.move_to(
+					self.request_trade_button.pos.x - self.buy_card_button.pos.length - 10,
+					self.request_trade_button.pos.y
+				)
 			else:
-				self.buy_card_button.pos.move_to(self.request_trade_button.pos.x,
-												 self.request_trade_button.pos.y - self.buy_card_button.pos.height - 10)
+				self.buy_card_button.pos.move_to(
+					self.request_trade_button.pos.x,
+					self.request_trade_button.pos.y - self.buy_card_button.pos.height - 10
+				)
 
 			for btn in self.buttons:
 				btn.repos()
+
+			#self.repos_current_player_cards(game)
+
 			for overlay in self.overlays:
 				overlay.repos()
 
@@ -180,12 +241,13 @@ class UIElement(Displayable):
 		self.colour = (204, 227, 198)
 		self.HUD = HUD
 		self.border_radius = 0
+		self.highlight_type = 1
 		self.highlighted = False
 		self.darkened = False
 		self.disabled = False
 
 	def render_highlighted(self):
-		if self.highlighted and not self.disabled:
+		if self.highlighted and not self.disabled and self.highlight_type == 1:
 			pygame.draw.rect(self.scene, (255, 255, 255),
 							 (self.pos.x - 4, self.pos.y - 4, self.pos.length + 8, self.pos.height + 8),
 							 border_radius=self.border_radius + 4)
@@ -195,7 +257,11 @@ class UIElement(Displayable):
 							 border_radius=self.border_radius + 2)
 
 	def render_base(self):
-		color = np.array(self.colour) - (np.array((50, 50, 50)) * int(self.darkened)) - (np.array((100, 100, 100)) * int(self.disabled))
+		color = np.array(self.colour) \
+				- (np.array((50, 50, 50)) * int(self.darkened)) \
+				- (np.array((100, 100, 100)) * int(self.disabled))
+		if self.highlight_type == 2:
+			color += ((np.array((25, 25, 25))) * int(self.highlighted))
 		pygame.draw.rect(self.scene, color, self.pos.get_rect(), border_radius=self.border_radius)
 
 	def render(self):
@@ -209,16 +275,22 @@ class UIElement(Displayable):
 
 class Button(UIElement):
 
-	def __init__(self, scene, HUD, type, asset_path=None, text=None, gab=(200, 100, 20), text_size=40, icon_size=50):
+	def __init__(self, scene, HUD, type, asset_path=None, text=None, gab=(200, 100, 20), text_size=40, icon_size=50,
+				 highlight_type=1, colour=(204, 227, 198), text_colour=(0, 0, 0), custom_id=None, disabled=False):
+
 		super().__init__(scene, HUD)
 		self.type = type
+		self.custom_id=custom_id
+		self.disabled = disabled
+		self.colour = colour
+		self.highlight_type = highlight_type
 
 		if not asset_path and not text:
 			text = 'Test'
 
 		self.label = None
 		if text:
-			self.label = DisplayableText(scene, text, size=text_size, color=(0, 0, 0))
+			self.label = DisplayableText(scene, text, size=text_size, color=text_colour)
 
 		self.icon = None
 		if asset_path:
@@ -251,17 +323,20 @@ class Button(UIElement):
 				self.pos.x + (self.pos.length - self.label.pos.length) / 2,
 				self.pos.y + (self.pos.height - self.label.pos.height) / 2)
 
+
+
 	def change_text(self, text):
 		self.label.change_text(text)
 		self.repos()
 	def render(self):
-		self.render_highlighted()
-		self.render_base()
+		if self._show:
+			self.render_highlighted()
+			self.render_base()
 
-		if self.label:
-			self.label.render()
-		if self.icon:
-			self.icon.draw()
+			if self.label:
+				self.label.render()
+			if self.icon:
+				self.icon.draw()
 
 	def show(self):
 		super().show()
@@ -342,6 +417,7 @@ class Overlay(UIElement):
 		self.ui_elements = []
 		self.surface = pygame.Surface((self.pos.length,self.pos.height))
 		self.colour = (0, 0, 0)
+		self.pos.move_to(0, 0)
 		self.alpha = 0
 		self.animation_speed = 8
 		self.target_alpha = 150
@@ -380,7 +456,7 @@ class Overlay(UIElement):
 	def render_base(self):
 		self.surface.fill(self.colour)
 		self.surface.set_alpha(self.alpha)
-		self.scene.blit(self.surface, (0, 0))
+		self.scene.blit(self.surface, (self.pos.x, self.pos.y))
 
 	def render(self):
 		if self.animation_state != "DEFAULT":
@@ -398,6 +474,7 @@ class Modal(Overlay):
 		self.hide()
 		self.bg = ModalBG(scene, HUD)
 		self.title = DisplayableText(scene, title, size=50)
+		self.title_text = title
 		self.title.hide()
 
 		self.addons = additional_elements
@@ -450,6 +527,7 @@ class Modal(Overlay):
 				el.show()
 
 	def disappear(self):
+		self.addons = []
 		super().disappear()
 		self.hide()
 		#for el in self.ui_elements:
@@ -533,3 +611,75 @@ class Toast(Overlay):
 		super().__init__(scene, HUD)
 
 
+class ContextMenu(Overlay):
+	def __init__(self, scene, HUD):
+		super().__init__(scene, HUD)
+		self.colour = (125, 125, 125)
+		self.target_alpha = 255
+		self.animation_speed = 16
+
+	def change_ui_elements(self, ui_elements):
+		self.ui_elements = ui_elements
+		for el in self.ui_elements:
+			el.hide()
+		self.repos()
+
+	def repos(self):
+		l = 10
+		h = 10
+		for el in self.ui_elements:
+			l = max(el.pos.length, l)
+			h = max(el.pos.height, h)
+
+		self.pos.length = l + 10
+		self.pos.height = (h + 5) * len(self.ui_elements) + 5
+		self.surface = pygame.Surface((self.pos.length, self.pos.height))
+
+		i = 0
+		for el in self.ui_elements:
+			el.pos.move_to(self.pos.x + 5, self.pos.y + (h + 5) * i + 5)
+			el.pos.length = l
+			el.pos.height = h
+			el.colour = self.colour
+			el.repos()
+			i+=1
+
+	def handle_animation(self):
+		if self.animation_state == "APPEARING":
+			self.alpha += self.animation_speed
+			if self.alpha >= self.target_alpha:
+				self.alpha = self.target_alpha
+				self.animation_state = "DEFAULT"
+				self.show()
+				for el in self.ui_elements:
+					el.show()
+
+		elif self.animation_state == "DISAPPEARING":
+			self.alpha -= self.animation_speed
+			if self.alpha <= 0:
+				self.alpha = 0
+				self.animation_state = "DEFAULT"
+				self.hide()
+
+	def disappear(self):
+		if self.animation_state == "DEFAULT":
+			self.animation_state = "DISAPPEARING"
+			for el in self.ui_elements:
+				el.hide()
+	def appear(self):
+		if self.animation_state == "DEFAULT":
+			self.animation_state = "APPEARING"
+			for el in self.ui_elements:
+				el.show()
+	def render_base(self):
+		self.surface.fill(self.colour)
+		self.surface.set_alpha(self.alpha)
+		self.scene.blit(self.surface, (self.pos.x, self.pos.y))
+
+	def render(self):
+		if self.animation_state != "DEFAULT":
+			self.handle_animation()
+		self.render_base()
+		if self._show:
+			for el in self.ui_elements:
+				el.render()

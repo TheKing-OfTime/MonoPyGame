@@ -177,3 +177,7 @@ class DisplayableText(Displayable):
         self.surface = self.font.render(self.text, True, self.color)
         self.pos.length = self.pos.default_length = self.surface.get_width()
         self.pos.height = self.pos.default_height = self.surface.get_height()
+
+    def repos(self):
+        self.pos.x = (self.scene.get_width() - self.pos.length) / 2
+        self.pos.y = (self.scene.get_height() - self.pos.height) / 2
