@@ -158,7 +158,7 @@ class Game(BaseClass):
                             els = self.HUD.context_menu.ui_elements
                     for btn in els:
                         btn.darkened = False
-                        if btn.disabled:
+                        if btn.disabled or (not btn._show and 'ctx-menu_deposit' in btn.type):
                             continue
                         if self.HUD.current_overlay:
                             if (self.HUD.current_overlay._show) and not ('modal' in btn.type) or not self.HUD.current_overlay._show and ('modal' in btn.type):
@@ -197,12 +197,31 @@ class Game(BaseClass):
                                     self.HUD.current_overlay.y_btn.custom_id = str(btn.custom_id) + '|' + self.players[btn.custom_id].name
                                     self.HUD.current_overlay.appear()
 
+                                elif btn.type == 'regular_ctx-menu_demolish':
+                                    card = self.get_card_by_tile(btn.custom_id)
+                                    if card.buildings > 0:
+                                        if card.buildings == 5:
+                                            card.owned_by.money += card.hostel_price
+                                        else:
+                                            card.owned_by.money += card.house_price
+                                        card.buildings -= 1
+
+
+                                elif btn.type == 'regular_ctx-menu_build':
+                                    card = self.get_card_by_tile(btn.custom_id)
+                                    if card.buildings < 5:
+                                        card.buildings += 1
+                                        if card.buildings == 5:
+                                            card.owned_by.money -= card.hostel_price
+                                        else:
+                                            card.owned_by.money -= card.house_price
+
                                 elif btn.type == 'regular_modal_change-name_yes':
                                     self.HUD.text_input = False
                                     self.HUD.current_overlay.disappear()
                                     data = btn.custom_id.split('|')
-                                    print(data[1])
                                     self.players[int(data[0])].name = data[1]
+                                    self.HUD.current_overlay.disappear()
 
                                 elif btn.type == 'regular_buy_card':
                                     self.HUD.current_overlay = self.HUD.overlays[1]
@@ -212,14 +231,21 @@ class Game(BaseClass):
                                         self.HUD.current_overlay.title_text + ' ' + str(card.price) + '$'
                                     )
                                     self.HUD.current_overlay.appear()
+
+                                elif btn.type == 'regular_request_trade':
+                                    self.HUD.current_overlay = self.HUD.overlays[3]
+                                    self.HUD.current_overlay.appear()
+
+                                elif btn.type == "regular_modal_buy_card_yes":
+                                    card = self.get_card_by_tile(self.current_player.tile)
+                                    card.owned_by = self.current_player
+                                    self.current_player.owned.append(card)
+                                    self.current_player.money -= card.price
+                                    self.HUD.buy_card_button.change_text('Куплена')
+                                    self.HUD.buy_card_button.disabled = True
+                                    self.HUD.current_overlay.disappear()
+
                                 elif btn.type.startswith('regular_modal'):
-                                    if btn.type == "regular_modal_buy_card_yes":
-                                        card = self.get_card_by_tile(self.current_player.tile)
-                                        card.owned_by = self.current_player
-                                        self.current_player.owned.append(card)
-                                        self.current_player.money -= card.price
-                                        self.HUD.buy_card_button.change_text('Куплена')
-                                        self.HUD.buy_card_button.disabled = True
                                     self.HUD.current_overlay.disappear()
 
                 elif event.button == 3:
@@ -255,6 +281,7 @@ class Game(BaseClass):
                                     self.HUD.context_menu.pos.move_to(*pygame.mouse.get_pos())
                                     self.HUD.context_menu.alpha = 0
                                     self.HUD.context_menu.hide()
+
                                     self.HUD.context_menu.change_ui_elements([
                                         Button(
                                             self.scene,
@@ -266,20 +293,50 @@ class Game(BaseClass):
                                             highlight_type=2,
                                             text_colour=(255, 255, 255),
                                             custom_id=card._id,
-                                            disabled=((card.owned_by.money - card.price * 0.6) < 0 and card.deposited)
-                                        ),
+                                            disabled=((card.owned_by.money - card.price * 0.6) < 0 and card.deposited) or card.buildings > 0,
+                                            disabled_color=(60, 60, 60)
+                                        )
+                                    ])
+
+                                    if card.buildings < 5:
+                                        check = card.buildings + 1
+                                        chk_money = 0
+                                        if check == 5:
+                                            chk_money = card.owned_by.money - card.hostel_price
+                                        else:
+                                            chk_money = card.owned_by.money - card.house_price
+                                        self.HUD.context_menu.ui_elements.append(
                                         Button(
                                             self.scene,
                                             self.HUD,
                                             'regular_ctx-menu_build',
-                                            text='Построить 1-й дом',
+                                            text='Построить ' + (f'{card.buildings + 1}-й дом' if card.buildings < 4 else 'отель'),
                                             gab=(250, 50, 10),
                                             text_size=30,
                                             highlight_type=2,
                                             text_colour=(255, 255, 255),
-                                            custom_id=card._id
-                                        )
-                                    ])
+                                            custom_id=card._id,
+                                            disabled_color=(60, 60, 60),
+                                            disabled=chk_money < 0
+                                        ))
+
+                                    if card.buildings > 0:
+                                        self.HUD.context_menu.ui_elements.append(
+                                        Button(
+                                            self.scene,
+                                            self.HUD,
+                                            'regular_ctx-menu_demolish',
+                                            text=f'Снести ' + (f'{card.buildings}-й дом' if card.buildings <= 4 else 'отель'),
+                                            gab=(250, 50, 10),
+                                            text_size=30,
+                                            highlight_type=2,
+                                            text_colour=(255, 255, 255),
+                                            custom_id=card._id,
+                                            disabled_color=(60, 60, 60)
+                                        ))
+
+                                    self.HUD.context_menu.repos()
+
                                     if self.HUD.context_menu.pos.x + self.HUD.context_menu.pos.length > self.scene.get_width() - 5:
                                         self.HUD.context_menu.pos.move(
                                             -(self.HUD.context_menu.pos.x + self.HUD.context_menu.pos.length - self.scene.get_width() + 5),
@@ -301,8 +358,9 @@ class Game(BaseClass):
                     if self.HUD.context_menu._show:
                         els = self.HUD.context_menu.ui_elements
                 for btn in els:
-                    if btn.type.startswith('radio') or btn.disabled:
+                    if btn.type.startswith('radio') or btn.disabled or not btn._show:
                         continue
+
                     if self.HUD.current_overlay:
                         if self.HUD.current_overlay._show and not ('modal' in btn.type) or not self.HUD.current_overlay._show and ('modal' in btn.type):
                             continue
@@ -320,7 +378,7 @@ class Game(BaseClass):
                         if self.HUD.context_menu._show:
                             els = self.HUD.context_menu.ui_elements
                     for btn in els:
-                        if btn.disabled:
+                        if btn.disabled or not btn._show:
                             continue
                         if self.HUD.current_overlay:
                             if self.HUD.current_overlay._show and not ('modal' in btn.type) or not self.HUD.current_overlay._show and ('modal' in btn.type):
@@ -360,6 +418,7 @@ class Game(BaseClass):
                 self.HUD.request_trade_button.disabled = False
                 card = self.get_card_by_tile(self.current_player.tile)
                 self.HUD.buy_card_button.disabled = True
+                self.current_player.handle_current_tile(self)
                 if card is None:
                     self.HUD.buy_card_button.change_text('Нельзя купить')
                 elif card.owned_by == self.current_player:
@@ -373,6 +432,8 @@ class Game(BaseClass):
                     self.HUD.buy_card_button.change_text('Купить карту')
 
         elif self.current_turn == self.TURN_STATES[2]:
+            if self.current_player.money < 0:
+                self.current_player.bankrupt = True
             self.HUD.request_trade_button.disabled = True
             self.HUD.buy_card_button.disabled = True
             txt = 'Передать ход'
@@ -382,14 +443,20 @@ class Game(BaseClass):
 
 
         elif self.current_turn == self.TURN_STATES[3]:
-            target = (self.current_player_id + 1) % len(self.players)
-            if self.dice_glass.first_dice.value == self.dice_glass.second_dice.value:
-                target = self.current_player_id
-            self.current_player = self.players[target]
-            self.current_player_id = target
+            self.next_player()
+
             self.HUD.next_turn_button.change_text('Бросить кости')
 
         self.current_turn = target_turn
+
+    def next_player(self):
+        target = (self.current_player_id + 1) % len(self.players)
+        if self.dice_glass.first_dice.value == self.dice_glass.second_dice.value:
+            target = self.current_player_id
+        self.current_player = self.players[target]
+        self.current_player_id = target
+        if self.current_player.bankrupt:
+            self.next_player()
 
     def handle_players(self):
         for player in self.players:

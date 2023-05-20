@@ -21,6 +21,7 @@ class Player(Animated):
 
     def __init__(self, scene, id, name="TheKingOfTime"):
         super().__init__(scene)
+        self.bankrupt = False
         self.frame = id % 5
         self.load_asset('assets\\pieces\\playable\\highlighted')
         self.rescale_assets(35, 35)
@@ -76,6 +77,14 @@ class Player(Animated):
             target_pos = self.get_target_pos()
             self.animation_memory = {"target_pos":target_pos, "player_pos": np.array([self.pos.x, self.pos.y])}
             self.animation_state = 'MOVE'
+
+    def handle_current_tile(self, game):
+        card = game.get_card_by_tile(self.tile)
+        if card:
+            if card.owned_by:
+                m = card.get_rent_price()
+                card.owned_by.money += m
+                self.money -= m
 
     def get_target_pos(self, number=1):
         target = 0

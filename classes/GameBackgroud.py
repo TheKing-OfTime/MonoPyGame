@@ -12,7 +12,7 @@ class GameBackground(Displayable):
 		super().__init__(scene)
 		self.load_asset('assets/Board/monopolyFirst_logo.png')
 		self.show()
-		self.asset = pygame.transform.smoothscale(pygame.transform.rotate(self.asset, -90), (self.width, self.height))
+		self.asset = pygame.transform.smoothscale(pygame.transform.rotate(self.asset, 90), (self.width, self.height))
 		self.pos.length = self.width
 		self.pos.height = self.height
 		self.update_pos()
