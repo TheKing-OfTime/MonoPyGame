@@ -143,6 +143,8 @@ class Game(BaseClass):
                         if not self.HUD.next_turn_button.disabled:
                             self.HUD.next_turn_button.darkened = False
                             self.next_turn()
+                    if event.key == pygame.K_k and self.game_state == 'DEFAULT':
+                        self.current_player.money = -100
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and self.game_state == 'DEFAULT':
                     if not self.HUD.next_turn_button.disabled:
@@ -158,7 +160,7 @@ class Game(BaseClass):
                             els = self.HUD.context_menu.ui_elements
                     for btn in els:
                         btn.darkened = False
-                        if btn.disabled or (not btn._show and 'ctx-menu_deposit' in btn.type):
+                        if btn.disabled or (not btn._show and not ('ctx-menu' in btn.type)):
                             continue
                         if self.HUD.current_overlay:
                             if (self.HUD.current_overlay._show) and not ('modal' in btn.type) or not self.HUD.current_overlay._show and ('modal' in btn.type):
@@ -247,6 +249,7 @@ class Game(BaseClass):
 
                                 elif btn.type.startswith('regular_modal'):
                                     self.HUD.current_overlay.disappear()
+                                    self.HUD.text_input = False
 
                 elif event.button == 3:
                     if self.game_state == 'DEFAULT':
@@ -298,7 +301,7 @@ class Game(BaseClass):
                                         )
                                     ])
 
-                                    if card.buildings < 5:
+                                    if card.buildings < 5 and not card.deposited:
                                         check = card.buildings + 1
                                         chk_money = 0
                                         if check == 5:
@@ -320,7 +323,7 @@ class Game(BaseClass):
                                             disabled=chk_money < 0
                                         ))
 
-                                    if card.buildings > 0:
+                                    if card.buildings > 0 and not card.deposited:
                                         self.HUD.context_menu.ui_elements.append(
                                         Button(
                                             self.scene,
@@ -405,6 +408,7 @@ class Game(BaseClass):
 
         elif self.current_turn == self.TURN_STATES[1]:
             self.HUD.current_overlay.disappear()
+            self.HUD.text_input = False
             target_turn = self.current_turn
             self.HUD.next_turn_button.disabled = True
             if self.current_player.animation_state == "DEFAULT":
