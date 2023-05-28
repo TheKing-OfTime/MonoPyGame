@@ -169,7 +169,7 @@ class HUD(BaseClass):
 			if card.animation_state == "DEFAULT":
 				card.pos.move_to(
 					r_edge + (card.pos.length + 5) * i,
-					game.bg.pos.y + (card.pos.height + 5) * j
+					(game.bg.pos.y + (card.pos.height + 5) * j) - game.self_player_cards_shift
 
 				)
 			card.show()

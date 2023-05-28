@@ -44,6 +44,7 @@ class Game(BaseClass):
         self.current_player = None
         self.current_turn = self.TURN_STATES[0]
         self.current_player_id = 0
+        self.self_player_cards_shift = 0
 
         self.HUD.init_main_menu()
 
@@ -126,6 +127,12 @@ class Game(BaseClass):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.done = True
+
+            elif event.type == pygame.MOUSEWHEEL:
+                if self.game_state == "DEFAULT":
+                    if (self.self_player_cards_shift + (event.y * 30)) >= 0:
+                        self.self_player_cards_shift += (event.y * 30)
+
             elif event.type == pygame.KEYUP:
 
                 if self.HUD.text_input:
