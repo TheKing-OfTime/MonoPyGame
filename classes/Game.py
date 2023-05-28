@@ -252,9 +252,9 @@ class Game(BaseClass):
 
                                 elif btn.type.startswith('regular_modal'):
                                     self.HUD.current_overlay.disappear()
-
-                    if self.HUD.context_menu._show:
-                        self.HUD.context_menu.disappear()
+                    if self.game_state == 'DEFAULT':
+                        if self.HUD.context_menu._show:
+                            self.HUD.context_menu.disappear()
 
                 elif event.button == 3:
                     if self.game_state == 'DEFAULT':
@@ -491,7 +491,8 @@ class Game(BaseClass):
         return None
 
     def handle_window_resize(self):
-        self.p_pos_shifted = np.array(self.bg.update_pos())
+        if self.bg:
+            self.p_pos_shifted = np.array(self.bg.update_pos())
         for player in self.players:
             player.pos.move(*self.p_pos_shifted)
 

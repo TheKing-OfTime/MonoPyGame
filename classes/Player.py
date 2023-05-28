@@ -34,7 +34,9 @@ class Player(Animated):
         self.owned = []
         self.chance_cards = []
         self.comm_ch_cards = []
-        self.pos.move_to(322, 41)
+        self.pos.move_to(
+            (self.scene.get_width()/2) - 318,
+            (self.scene.get_height()/2) - 319)
         self.show()
 
     def move_to_tile(self, number):
