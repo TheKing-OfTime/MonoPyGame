@@ -1,4 +1,5 @@
 import pygame
+import time
 import numpy as np
 
 from classes.BaseClass import BaseClass
@@ -111,17 +112,28 @@ class HUD(BaseClass):
 		self.buttons.append(self.pc_3)
 		self.buttons.append(self.pc_4)
 
-
 	def render(self, game, state="DEFAULT", player=None, players=None):
 
 		if state == "DEFAULT":
+			# start_time = time.time()
 			self.render_player_cards(player, players)
+			# print(round((time.time() - start_time) * 1000), "ms player_cards drawn",  sep='')
+
+			# start_time = time.time()
 			self.render_buttons()
+			# print(round((time.time() - start_time) * 1000), "ms buttons drawn",  sep='')
+
+			# start_time = time.time()
 			self.render_current_player_cards(game)
+			# print(round((time.time() - start_time) * 1000), "ms current player cards drawn",  sep='')
+
+			# start_time = time.time()
 			self.context_menu.render()
+			# print(round((time.time() - start_time) * 1000), "ms context menu drawn",  sep='')
+
+			# start_time = time.time()
 			self.render_overlays()
-
-
+			# print(round((time.time() - start_time) * 1000), "ms overlays drawn",  sep='')
 
 		elif state == "LOADING":
 			self.show_loading()
@@ -192,6 +204,39 @@ class HUD(BaseClass):
 		)
 		loading_text.show()
 		loading_text.render()
+		pygame.display.flip()
+
+	def show_advanced_loading(self, progress_bar: float, description=''):
+		self.scene.fill(color=[50, 50, 50])
+		loading_text = DisplayableText(self.scene, 'Loading...', size=60)
+		loading_text.pos.move_to(
+			(self.scene.get_width() - loading_text.pos.length) / 2,
+			(self.scene.get_height() - loading_text.pos.height) / 2
+		)
+
+		pb = Displayable(self.scene, True)
+		pb.pos.color = (255, 255, 255)
+		pb.pos.height = 20
+		pb.pos.length = (self.scene.get_width() - 10) * progress_bar
+		pb.pos.move_to(
+			5,
+			self.scene.get_height() - pb.pos.height - 5
+		)
+
+		loading_text.show()
+		loading_text.render()
+		pb.show()
+		pb.draw()
+
+		if description:
+			loading_text_description = DisplayableText(self.scene, description, size=30)
+			loading_text_description.pos.move_to(
+				5,
+				pb.pos.y - loading_text_description.pos.height - 5
+			)
+			loading_text_description.show()
+			loading_text_description.render()
+
 		pygame.display.flip()
 
 	def repos(self, state="DEFAULT", game=None):
@@ -415,19 +460,20 @@ class PlayerCard(UIElement):
 			self.colour = (204, 227, 198)
 
 		self.render_base()
-
-		self.player_name_text.change_text(player.name)
-		self.player_name_text.pos.move_to(self.pos.x + ((self.pos.length - self.player_name_text.pos.length) / 2),
-										  self.pos.y + self.pos.height - self.player_name_text.pos.height - 5)
+		if player.name != self.player_name_text.text:
+			self.player_name_text.change_text(player.name)
+			self.player_name_text.pos.move_to(self.pos.x + ((self.pos.length - self.player_name_text.pos.length) / 2),
+											  self.pos.y + self.pos.height - self.player_name_text.pos.height - 5)
 		self.player_name_text.render()
 
-		self.player_money_text.change_text(str(player.money) + '$')
-		self.player_money_text.pos.move_to(
-			self.pos.x + self.pos.length - self.player_money_text.pos.length,
-			self.pos.y + 5)
+		if str(player.money) + '$' != self.player_money_text.text:
+			self.player_money_text.change_text(str(player.money) + '$')
+			self.player_money_text.pos.move_to(
+				self.pos.x + self.pos.length - self.player_money_text.pos.length,
+				self.pos.y + 5)
 		self.player_money_text.render()
 
-		self.scene.blit(pygame.transform.smoothscale_by(player.core_assets[player.frame], 0.2), (self.pos.x + 5, self.pos.y + 5))
+		self.scene.blit(player.icon, (self.pos.x + 5, self.pos.y + 5))
 
 
 class Overlay(UIElement):
@@ -487,6 +533,7 @@ class Overlay(UIElement):
 		self.pos.length = self.scene.get_width()
 		self.surface = pygame.Surface((self.pos.length, self.pos.height))
 
+
 class Modal(Overlay):
 	def __init__(self, scene, HUD, title, y_btn, description=None, n_btn=None, additional_elements=None):
 		super().__init__(scene, HUD)
@@ -517,6 +564,8 @@ class Modal(Overlay):
 		self.repos()
 
 	def render(self):
+		if not self._show and self.animation_state == "DEFAULT":
+			return
 		if self.animation_state != "DEFAULT":
 			self.handle_animation()
 		self.render_base()
@@ -526,6 +575,9 @@ class Modal(Overlay):
 				el.handle_animation()
 			if el._show:
 				el.render()
+
+
+
 		if self.addons and self.animation_state == "DEFAULT":
 			for el in self.addons:
 				if el.animation_state != "DEFAULT":

@@ -27,18 +27,16 @@ class Game(BaseClass):
         'NEXT_PLAYER'
     ]
 
-    def __init__(self, scene, player_count=4):
+    def __init__(self, scene, start_time, player_count=4):
         super().__init__(scene)
-        start_time = time.time()
         self.done = False
         self.game_state = "LOADING"
         self.HUD = HUD(scene)
         self.HUD.show_loading()
-        print("loading...")
 
         self.p_count = player_count
         self.p_pos_shifted = np.array([0, 0])
-        self.bg = GameBackground(scene)
+        self.bg = None
         self.cards = []
         self.dice_glass = GlassDice(scene)
         self.cards_in_move = []
@@ -56,18 +54,20 @@ class Game(BaseClass):
         while not self.done:
             frame_time = time.time()
             self.handle_events()
-
+            # print(round((time.time() - frame_time) * 1000), "ms events handled",  sep='')
             if self.game_state == 'DEFAULT':
-
+                # start_time = time.time()
                 self.bg.draw()
-
+                # print(round((time.time() - start_time) * 1000), "ms background drawn",  sep='')
+                # start_time = time.time()
                 self.handle_cards_animation()
-
+                # print(round((time.time() - start_time) * 1000), "ms cards animation handled", sep='')
+                # start_time = time.time()
                 self.handle_players()
-
-                #self.handle_dices()
-
+                # print(round((time.time() - start_time) * 1000), "ms players handled", sep='')
+            # start_time = time.time()
             self.handle_HUD()
+            # print(round((time.time() - start_time) * 1000), "ms HUD handled", sep='')
 
             pygame.display.flip()
             pygame.time.wait(max(10 - round((time.time() - frame_time) * 1000), 0))
@@ -92,7 +92,6 @@ class Game(BaseClass):
             p.pos.move(*self.p_pos_shifted)
             self.players.append(p)
         self.current_player = self.players[0]
-        self.HUD.init_default(self.players, self)
 
     def load_player(self, id):
         return Player(self.scene, id, "Player" + str(id))
@@ -101,8 +100,18 @@ class Game(BaseClass):
         return Card(self.scene, street_data, self)
 
     def init_game(self):
+        start_time = time.time()
+        print("loading game...")
+        self.HUD.show_advanced_loading(0.1, 'Loading board...')
+        self.bg = GameBackground(self.scene)
+        self.HUD.show_advanced_loading(0.2, 'Loading cards...')
         self.load_cards()
+        self.HUD.show_advanced_loading(0.5, 'Loading players...')
         self.load_players()
+        self.HUD.show_advanced_loading(0.7, 'Loading HUD...')
+        self.HUD.init_default(self.players, self)
+        self.HUD.show_advanced_loading(1, 'Loading complete!')
+        print("game loaded in: ", round((time.time() - start_time) * 1000), 'ms', sep='')
 
     def handle_cards(self):
         self.handle_cards_animation()
@@ -149,16 +158,13 @@ class Game(BaseClass):
                         self.HUD.next_turn_button.darkened = True
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
-                    if self.game_state == "DEFAULT":
-                        if self.HUD.context_menu._show:
-                            self.HUD.context_menu.disappear()
                     els = self.HUD.buttons
                     if self.HUD.context_menu:
                         if self.HUD.context_menu._show:
                             els = self.HUD.context_menu.ui_elements
                     for btn in els:
                         btn.darkened = False
-                        if btn.disabled or (not btn._show and 'ctx-menu_deposit' in btn.type):
+                        if btn.disabled or not btn._show:
                             continue
                         if self.HUD.current_overlay:
                             if (self.HUD.current_overlay._show) and not ('modal' in btn.type) or not self.HUD.current_overlay._show and ('modal' in btn.type):
@@ -168,7 +174,6 @@ class Game(BaseClass):
                             if self.game_state == "MAIN_MENU":
                                 if btn.type == 'regular_play':
                                     self.game_state = "LOADING"
-                                    self.HUD.show_loading()
                                     self.init_game()
                                     self.game_state = "DEFAULT"
                                 elif btn.type.startswith('radio'):
@@ -248,6 +253,9 @@ class Game(BaseClass):
                                 elif btn.type.startswith('regular_modal'):
                                     self.HUD.current_overlay.disappear()
 
+                    if self.HUD.context_menu._show:
+                        self.HUD.context_menu.disappear()
+
                 elif event.button == 3:
                     if self.game_state == 'DEFAULT':
                         collide = None
@@ -298,7 +306,7 @@ class Game(BaseClass):
                                         )
                                     ])
 
-                                    if card.buildings < 5:
+                                    if card.buildings < 5 and not card.deposited:
                                         check = card.buildings + 1
                                         chk_money = 0
                                         if check == 5:
@@ -468,7 +476,6 @@ class Game(BaseClass):
 
     def handle_player_animation(self):
         self.current_player.handle_animations(self)
-
 
     def handle_HUD(self):
         self.HUD.render(self, self.game_state, self.current_player, self.players)

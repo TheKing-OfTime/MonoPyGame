@@ -25,6 +25,7 @@ class Player(Animated):
         self.frame = id % 5
         self.load_asset('assets\\pieces\\playable\\highlighted')
         self.rescale_assets(35, 35)
+        self.icon = pygame.transform.smoothscale_by(self.core_assets[self.frame], 0.2)
         self._id = id
         self.name = name
         self.tile = self.curr_tile = 0

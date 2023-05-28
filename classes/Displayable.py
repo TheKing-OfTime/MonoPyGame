@@ -25,6 +25,11 @@ class Displayable(BaseClass):
         self.pos.length = img.get_width()
         self.pos.height = img.get_height()
 
+    def convert_asset(self):
+        self.asset = self.core_asset = self.core_asset.convert()
+        self.pos.length = self.asset.get_width()
+        self.pos.height = self.asset.get_height()
+
     # noinspection PyTypeChecker
     def draw(self):
         if not self._show:
@@ -33,6 +38,7 @@ class Displayable(BaseClass):
             pygame.draw.rect(self.scene, self.pos.color, self.pos.get_rect())
         else:
             self.scene.blit(self.asset, (self.pos.x, self.pos.y))
+
     def get_rect(self):
         return pygame.Rect(self.pos.get_rect())
 
@@ -121,6 +127,16 @@ class Animated(Displayable):
         self.assets = new_assets
         return self.assets
 
+    def convert_assets(self):
+        self.assets = []
+        new_core_assets = []
+        for asset in self.core_assets:
+            asset = asset.convert()
+            self.assets.append(asset)
+            self.pos.length = asset.get_width()
+            self.pos.height = asset.get_height()
+            new_core_assets.append(asset)
+        self.core_asset = new_core_assets
 
     def rescale_assets_by(self, factor):
         new_assets = []

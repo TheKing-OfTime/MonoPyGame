@@ -30,6 +30,7 @@ class Card(Animated):
         self.house_price = street_data["house_price"]
         self.hostel_price = street_data["hostel_price"]
         self.load_asset(street_data["assets_path"])
+        self.convert_assets()
         self.rescale_assets_by(0.2)
         self.pos.default_length = self.pos.length
         self.pos.default_height = self.pos.height
