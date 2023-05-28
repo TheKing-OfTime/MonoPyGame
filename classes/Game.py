@@ -77,12 +77,15 @@ class Game(BaseClass):
     def load_cards(self):
         with open('config.json', 'r', encoding='UTF-8') as rf:
             data = json.load(rf)
+        i = 0.2
         for tile in data["tiles"]:
             if tile['type'] != 'street':
                 continue
             if not tile['data']['assets_path']:
                 print(tile['name'] + ' assets_path not found. Skipping!')
                 continue
+            i += 0.018
+            self.HUD.show_advanced_loading(i, f'Loading card: {tile["data"]["name"]}...')
             card = self.create_street(tile['data'])
             card.set_id(tile['id'])
             self.cards.append(card)
@@ -107,7 +110,7 @@ class Game(BaseClass):
         self.bg = GameBackground(self.scene)
         self.HUD.show_advanced_loading(0.2, 'Loading cards...')
         self.load_cards()
-        self.HUD.show_advanced_loading(0.5, 'Loading players...')
+        self.HUD.show_advanced_loading(0.6, 'Loading players...')
         self.load_players()
         self.HUD.show_advanced_loading(0.7, 'Loading HUD...')
         self.HUD.init_default(self.players, self)
